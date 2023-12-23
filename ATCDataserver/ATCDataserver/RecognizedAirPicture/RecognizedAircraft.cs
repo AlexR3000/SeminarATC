@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
+using System.Reflection.Metadata.Ecma335;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -11,8 +13,6 @@ namespace RecognizedAirPicture
     {
         public string AircraftId { get; set; }
         public string Callsign { get; set; }
-
-        public Position? NextEstimatedPosition { get; set; }
 
         public List<Position> Positions { get; set; } = new List<Position>();
 
@@ -36,7 +36,8 @@ namespace RecognizedAirPicture
             AircraftId = sbsMessage.FieldHexIdent;
             Callsign = sbsMessage.FieldCallsign;
 
-            LastMessageGenerated = sbsMessage.FieldDateMessageGenerated.ToDateTime(sbsMessage.FieldTimeMessageGenerated).ToUniversalTime();
+            LastMessageGenerated = sbsMessage.FieldDateMessageGenerated
+                .ToDateTime(sbsMessage.FieldTimeMessageGenerated).ToUniversalTime();
             LastMessage = DateTime.UtcNow;
             HasChanged = true;
 
@@ -85,9 +86,21 @@ namespace RecognizedAirPicture
             };
         }
 
-        public Position? GetLastPosition()
+        public bool HasValidState()
         {
-            return Positions.OrderBy(position => position.Generated).FirstOrDefault();
+            return Track != null && GroundSpeed != 0 && Positions.Count >= 3 &&
+                Callsign != string.Empty && AircraftId != string.Empty;
+        }
+
+        public Position GetLastPosition()
+        {
+
+            var lastPosition = Positions.OrderBy(position => position.Generated).FirstOrDefault();
+            if (lastPosition == null)
+            {                
+                throw new InvalidOperationException("Can't get last aircraft position because no position is known");
+            }
+            return lastPosition;
 
         }
 
@@ -126,7 +139,8 @@ namespace RecognizedAirPicture
         /// Destination point given distance and bearing from start point
         /// </summary>
         /// <param name="aircraft"></param>
-        public static Position CalculateDestinationPoint(double latitudeInDegree, double longitudeInDegree, int trackInDegree, double distance)
+        public static Position CalculateDestinationPoint(double latitudeInDegree, double longitudeInDegree,
+            int trackInDegree, double distance)
         {
             const int earthRadius = 6371;
 

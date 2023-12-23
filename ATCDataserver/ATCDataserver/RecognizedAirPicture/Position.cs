@@ -12,12 +12,10 @@ namespace RecognizedAirPicture
         public double Longitude {  get; set; }
         public double Latitude { get; set; }
         public DateTime Generated { get; set; }
-        public DateTime PositionAddedAt { get; set; }
         public bool IsEstimated { get; set; }
 
         public Position()
         {
-            PositionAddedAt = DateTime.UtcNow;
             IsEstimated = false;
         }
 
@@ -32,8 +30,6 @@ namespace RecognizedAirPicture
             builder.Append(Longitude);
             builder.Append(':');
             builder.Append(Generated);
-            builder.Append(':');
-            builder.Append(PositionAddedAt);
             builder.Append(':');
             builder.Append(IsEstimated);  
             return builder.ToString();

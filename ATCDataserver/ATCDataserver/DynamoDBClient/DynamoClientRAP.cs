@@ -3,6 +3,7 @@ using Amazon.DynamoDBv2.Model;
 using RecognizedAirPicture;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -39,13 +40,19 @@ namespace DynamoDBClient
             return result;
         }
 
-        public async Task InsertAircraftAsync(string planeId, IEnumerable<Position> positions, string callsign)
+        public async Task<bool> InsertAircraftAsync(RecognizedAircraft aircraft)
         {
-            var encodedPositions = positions.Select(position => position.ToString()).ToList();
+            
+            var planeId = aircraft.AircraftId;
+            var callsign = aircraft.Callsign;
+
+            var position = aircraft.GetLastPosition();
 
 
             try
             {
+
+
                 var request = new PutItemRequest
                 {
                     TableName = "RecognizedAirPicture",
@@ -54,16 +61,19 @@ namespace DynamoDBClient
                     { "ID", new AttributeValue { S=planeId} },
                     // string set only can have each value once but since the time is part of the stored string
                     // it should be no issue
-                    {"Positions", new AttributeValue { SS=encodedPositions} },
+                    {"Position", new AttributeValue { S=position.ToString()} },
                     {"Callsign", new AttributeValue { S=callsign} },
                 }
                 };
 
                 await _client.PutItemAsync(request);
+
+                return true;
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.Message);
+                Debug.WriteLine(ex.Message);
+                return false;
             }
         }
 

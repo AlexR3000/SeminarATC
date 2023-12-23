@@ -6,10 +6,10 @@ namespace ATCDataserver
 {
     public class DataServerMain
     {
+        private static int NewEstimateThreshold = 1;
 
         private const int MAXMESSAGEFIELDS = 22;
 
-        // TODO refactoring for better separation and scalability
         public static void Main()
         {
             var airPicture = new List<RecognizedAircraft>();
@@ -26,7 +26,9 @@ namespace ATCDataserver
             {
                 while (true)
                 {
-                    string receivedMessage = receiver.ReceivedMessageQueue.Count >= 1 ? receiver.ReceivedMessageQueue.Dequeue() : string.Empty;
+                    string receivedMessage = receiver.ReceivedMessageQueue.Count >= 1
+                        ? receiver.ReceivedMessageQueue.Dequeue() : string.Empty;
+
                     var sbsMessage = DataParser(receivedMessage);
                     ProcessMessage(airPicture, sbsMessage);
                 }
@@ -84,7 +86,7 @@ namespace ATCDataserver
                 var lastKnownPosition = aircraft.GetLastPosition();
 
                 if (lastKnownPosition != null &&
-                    (DateTime.UtcNow - lastKnownPosition.PositionAddedAt).TotalMinutes > 1)
+                    (DateTime.UtcNow - lastKnownPosition.Generated).TotalMinutes > NewEstimateThreshold)
                 {
                     aircraft.AddNewEstimatePosition();
                 }
@@ -93,7 +95,7 @@ namespace ATCDataserver
 
         public static async void UploadChangedAircrafts(DynamoClientRAP client, IEnumerable<RecognizedAircraft> airPicture)
         {
-            var changedAircrafts = airPicture.Where(aircraft => aircraft.HasChanged);
+            var changedAircrafts = airPicture.Where(aircraft => aircraft.HasChanged && aircraft.HasValidState());
 
             foreach (var aircraft in changedAircrafts)
             {
@@ -105,9 +107,7 @@ namespace ATCDataserver
 
                     if (lockTaken)
                     {
-                        // TODO change parameter into just aircraft
-                        // To make it parallel the foreach loop would have to create more tasks
-                        await client.InsertAircraftAsync(aircraft.AircraftId, aircraft.Positions, aircraft.Callsign);
+                        await client.InsertAircraftAsync(aircraft);
                         aircraft.HasChanged = false;
                     }
                 }
@@ -188,7 +188,7 @@ namespace ATCDataserver
                     }
                     break;
                 case SBSMessageHelper.ESAirborneVelocityMessage:
-                    // TODO add outlier removal
+                    // TODO filter the message with median filter
                     aircraft.Track = sbsMessage.FieldTrack;
                     aircraft.GroundSpeed = sbsMessage.FieldGroundSpeed;
                     break;
@@ -197,43 +197,6 @@ namespace ATCDataserver
             }
 
             aircraft.HasChanged = true;
-        }
-
-        
-
-
-        // TODO rework or remove
-        public static async void RunDataServerAsync()
-        {
-            var client = new DynamoClientRAP();
-
-            while (true)
-            {
-                Console.WriteLine("id or exit to leave");
-
-                var id = "";//Console.ReadLine();
-
-                if (id.Equals("exit"))
-                {
-                    break;
-                }
-
-                // var callsign = "";// Console.ReadLine();
-                // var latitude = "";//Console.ReadLine();
-                // var longitude = "";//Console.ReadLine();
-
-
-                // await Task.Run(() => client.InsertPlaneAsync(id, callsign, latitude, longitude));
-
-            }
-
-            var result = await client.GetAllFromTableAsync("RecognizedAirPicture");
-
-            foreach (var item in result.Items)
-            {
-                Console.Write($"ID: {item["ID"].S}, Latitude: {item["Latitude"].S}, Longitude: {item["Longitude"].S}, callsign: {item["Callsign"].S} ");
-                Console.WriteLine("");
-            }
         }
     }
 }
