@@ -50,14 +50,13 @@ namespace RecognizedAirPicture
         // position based
         public int FieldAltitude { get; set; } = 0;
         public int FieldGroundSpeed { get; set; } = 0;
-        public string FieldTrack { get; set; } = string.Empty;
+        public int FieldTrack { get; set; } = 0;
         public double FieldLatitude { get; set; } = 0;
         public double FieldLongitude { get; set; } = 0;
 
         public bool IgnoreMessage { get; set; } = false;
         
 
-        // TODO Considering if whole class is even necessary.
         public SBSMessageHelper(bool ignore=false)
         {
             IgnoreMessage = ignore;
@@ -97,7 +96,11 @@ namespace RecognizedAirPicture
             {
                 FieldGroundSpeed = groundspeed;
             }
-            FieldTrack = splitMessage[(int)(MessageFieldNumbers.Track)];
+            if (int.TryParse(splitMessage[(int)MessageFieldNumbers.Track], NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out int track))
+            {
+                FieldTrack = track;
+            }
+            
         }
 
     }

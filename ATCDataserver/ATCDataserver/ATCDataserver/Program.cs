@@ -17,11 +17,11 @@ namespace ATCDataserver
 
             var receiver = new DataReceiver("127.0.0.1", 5678);
 
-            var dataCancellationToken = new CancellationTokenSource();
-            var dataStreamTask = Task.Run(() => receiver.StreamReceiveAsync(), dataCancellationToken.Token);
+            
+            var dataStreamTask = Task.Run(() => receiver.StreamReceiveAsync());
 
 
-            var messageProcessingCancellationToken = new CancellationTokenSource();
+            
             var messageProcessing = Task.Run(() =>
             {
                 while (true)
@@ -32,7 +32,7 @@ namespace ATCDataserver
                     var sbsMessage = DataParser(receivedMessage);
                     ProcessMessage(airPicture, sbsMessage);
                 }
-            }, messageProcessingCancellationToken.Token);
+            });
 
 
             var dataStoreManager = Task.Run(() =>
@@ -141,12 +141,13 @@ namespace ATCDataserver
         public static void ProcessMessage(List<RecognizedAircraft> airPicture, SBSMessageHelper sbsMessage)
         {
             // TODO think of better solution
-            // conditions on when to return immediately
+            // Returns when messagetype is not whitelisted
             if (sbsMessage is null || sbsMessage.IgnoreMessage) return;
             if (!sbsMessage.FieldType.Equals(SBSMessageHelper.MSG)) return;
             if (sbsMessage.FieldType.Equals(SBSMessageHelper.MSG) &&
                 sbsMessage.FieldTransmissionType != SBSMessageHelper.ESAirbornePositionMessage && 
-                sbsMessage.FieldTransmissionType != SBSMessageHelper.ESAirbornePositionMessage)
+                sbsMessage.FieldTransmissionType != SBSMessageHelper.ESAirbornePositionMessage &&
+                sbsMessage.FieldTransmissionType != SBSMessageHelper.ESIdentificationAndCategory)
             {
                 return;
             }
@@ -172,8 +173,11 @@ namespace ATCDataserver
         {
             switch (sbsMessage.FieldTransmissionType)
             {
+                case SBSMessageHelper.ESIdentificationAndCategory:
+                    aircraft.Callsign = sbsMessage.FieldCallsign;
+                    break;
                 case SBSMessageHelper.ESAirbornePositionMessage:
-                    if (!aircraft.IsOutlierMessage(sbsMessage))
+                    if (!aircraft.IsOutlierPosition(sbsMessage))
                     {
                         var newPosition = new Position
                         {
@@ -188,9 +192,12 @@ namespace ATCDataserver
                     }
                     break;
                 case SBSMessageHelper.ESAirborneVelocityMessage:
-                    // TODO filter the message with median filter
-                    aircraft.Track = sbsMessage.FieldTrack;
-                    aircraft.GroundSpeed = sbsMessage.FieldGroundSpeed;
+
+                    RecognizedAircraft.AddNewValueToFixedSizeCollection(sbsMessage.FieldTrack, aircraft.LastTracks);
+                    aircraft.Track = (int)RecognizedAircraft.ApplyMedianFilter(aircraft.LastTracks);
+
+                    RecognizedAircraft.AddNewValueToFixedSizeCollection(sbsMessage.FieldGroundSpeed, aircraft.LastSpeeds);
+                    aircraft.GroundSpeed = (int)RecognizedAircraft.ApplyMedianFilter(aircraft.LastSpeeds);
                     break;
                 default:
                     break;

@@ -45,7 +45,7 @@ namespace DynamoDBClient
             
             var planeId = aircraft.AircraftId;
             var callsign = aircraft.Callsign;
-
+            var estimationCount = aircraft.Positions.Where(position => position.IsEstimated).Count();
             var position = aircraft.GetLastPosition();
 
 
@@ -62,6 +62,7 @@ namespace DynamoDBClient
                     // string set only can have each value once but since the time is part of the stored string
                     // it should be no issue
                     {"Position", new AttributeValue { S=position.ToString()} },
+                    {"Estimations", new AttributeValue {N=estimationCount.ToString()} },
                     {"Callsign", new AttributeValue { S=callsign} },
                 }
                 };
