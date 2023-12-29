@@ -43,10 +43,16 @@ namespace DynamoDBClient
         public async Task<bool> InsertAircraftAsync(RecognizedAircraft aircraft)
         {
             
-            var planeId = aircraft.AircraftId;
+            var planeId = aircraft.TransponderId;
             var callsign = aircraft.Callsign;
             var estimationCount = aircraft.Positions.Where(position => position.IsEstimated).Count();
             var position = aircraft.GetLastPosition();
+
+            // in case position doesn't exist don't upload
+            if (position == null)
+            {
+                return false;
+            }
 
 
             try
@@ -64,6 +70,7 @@ namespace DynamoDBClient
                     {"Position", new AttributeValue { S=position.ToString()} },
                     {"Estimations", new AttributeValue {N=estimationCount.ToString()} },
                     {"Callsign", new AttributeValue { S=callsign} },
+                    {"ExpireAt", new AttributeValue{N=DateTimeOffset.UtcNow.AddMinutes(5).ToUnixTimeSeconds().ToString() } }
                 }
                 };
 
@@ -82,7 +89,7 @@ namespace DynamoDBClient
         {
             var key = new Dictionary<string, AttributeValue>
             {
-                ["ID"] = new AttributeValue { S = aircraft.AircraftId },
+                ["ID"] = new AttributeValue { S = aircraft.TransponderId },
             };
 
             var request = new DeleteItemRequest

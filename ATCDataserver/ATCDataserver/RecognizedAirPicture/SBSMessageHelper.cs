@@ -34,8 +34,10 @@ namespace RecognizedAirPicture
 
         // identification based
         public string FieldSessionID { get; set; } = string.Empty;
+        // some database id that appears to be unused by hsog base station
         public string FieldAircraftID { get; set; } = string.Empty;
 
+        // transponder id which is part of every message
         public string FieldHexIdent {  get; set; } = string.Empty;
 
         public string FieldFlightID { get; set; } = string.Empty;
@@ -62,7 +64,6 @@ namespace RecognizedAirPicture
             IgnoreMessage = ignore;
         }
 
-        // TODO come up with better solution
         public void SetFields(string[] splitMessage)
         {
             // Until FieldCallsign all are always part of a message. It is why Parse works instead and TryParse is not required.
@@ -105,7 +106,7 @@ namespace RecognizedAirPicture
 
     }
 
-    // Values correspond to the fields mentioned here http://woodair.net/sbs/article/barebones42_socket_data.htm, but -1
+    // Values correspond to the fields mentioned here http://woodair.net/sbs/article/barebones42_socket_data.htm, but starting from 0
     public enum MessageFieldNumbers
     {
         Type = 0,

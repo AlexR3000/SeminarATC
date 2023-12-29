@@ -35,8 +35,28 @@ namespace DynamoDbSetup
             var result = CreateDynamoTable(client);
 
             while (result.IsCompleted != true) { }
-            
 
+            var enableTTLResult = EnableTTLAsync(client, "RecognizedAirPicture");
+
+        }
+
+        static async Task EnableTTLAsync(IAmazonDynamoDB client, string tableName)
+        {
+            var ttlSpecification = new TimeToLiveSpecification
+            {
+                AttributeName = "ExpireAt", // Replace with the attribute name you want to use for TTL
+                Enabled = true
+            };
+
+            var request = new UpdateTimeToLiveRequest
+            {
+                TableName = tableName,
+                TimeToLiveSpecification = ttlSpecification
+            };
+
+            var response = await client.UpdateTimeToLiveAsync(request);
+
+            Console.WriteLine($"TTL Status for table '{tableName}': {response.TimeToLiveSpecification.Enabled}");
         }
 
         public static async Task<bool> CreateDynamoTable(AmazonDynamoDBClient client)

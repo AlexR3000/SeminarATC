@@ -1,34 +1,43 @@
 ﻿using ATCDataserver;
 using DynamoDBClient;
 using RecognizedAirPicture;
+using System.Collections.Concurrent;
 
 namespace ATCDataserver
 {
     public class DataServerMain
     {
-        private static int NewEstimateThreshold = 1;
+        private static readonly int NEW_ESTIMATE_THRESHOLD = 1;
+        private static readonly int REMOVE_OLD_AIRCRAFT_THRESHOLD = 1;
 
-        private const int MAXMESSAGEFIELDS = 22;
+        private static readonly int MAX_MESSAGE_FIELDS = 22;
+
+        private static readonly object AIR_PICTURE_LOCK = new object(); 
 
         public static void Main()
         {
             var airPicture = new List<RecognizedAircraft>();
             var aircraftForRemoval = new List<RecognizedAircraft>();
 
-            var receiver = new DataReceiver("127.0.0.1", 5678);
+            var receiver = new DataReceiver("141.79.10.172", 30003);
 
             
-            var dataStreamTask = Task.Run(() => receiver.StreamReceiveAsync());
+            var dataStreamTask = Task.Run(() => receiver.StreamReceive());
 
 
-            
+
+
+            /*
             var messageProcessing = Task.Run(() =>
             {
                 while (true)
                 {
-                    string receivedMessage = receiver.ReceivedMessageQueue.Count >= 1
-                        ? receiver.ReceivedMessageQueue.Dequeue() : string.Empty;
+                    var hasReceived = receiver.ReceivedMessageQueue.TryDequeue(out var receivedMessage);
 
+                    if (!hasReceived || receivedMessage == null)
+                    {
+                        continue;
+                    }
                     var sbsMessage = DataParser(receivedMessage);
                     ProcessMessage(airPicture, sbsMessage);
                 }
@@ -40,22 +49,34 @@ namespace ATCDataserver
                 var client = new DynamoClientRAP();
                 while (true)
                 {
-                    DeleteRemovedAircrafts(client, aircraftForRemoval);
                     UploadChangedAircrafts(client, airPicture);
                     Thread.Sleep(100);
-
                 }
             });
 
             var dataManager = Task.Run(() =>
             {
-
                 ManageData(airPicture, aircraftForRemoval);
+            });*/
 
 
-            });
+            while (true) 
+            {
+                var hasReceived = receiver.ReceivedMessageQueue.TryDequeue(out var receivedMessage);
 
-            while (true) { }
+                if (!hasReceived || receivedMessage == null)
+                {
+                    continue;
+                }
+                var sbsMessage = DataParser(receivedMessage);
+                ProcessMessage(airPicture, sbsMessage);
+
+                ManageDataIteration(airPicture, aircraftForRemoval);
+
+                var client = new DynamoClientRAP();
+                UploadChangedAircrafts(client, airPicture);
+
+            }
         }
 
         public static async void DeleteRemovedAircrafts(DynamoClientRAP client, List<RecognizedAircraft> aircraftsForRemoval) 
@@ -68,47 +89,63 @@ namespace ATCDataserver
 
         // Manage the data such as calculating new positions using extrapolation
         // and marking aircrafts as obsolete when they have not received updates in a while.
-        public static void ManageData(List<RecognizedAircraft> airPicture, List<RecognizedAircraft> removalList)
+
+        public static void ManageDataIteration(List<RecognizedAircraft> airPicture, List<RecognizedAircraft> removalList)
         {
-            var orderedAircrafts = airPicture.OrderBy(aircraft => aircraft.LastMessage);
+            List<RecognizedAircraft> orderedAircrafts;
+            lock (AIR_PICTURE_LOCK)
+            {
+                orderedAircrafts = airPicture.OrderBy(aircraft => aircraft.LastMessage).ToList();
+            }
 
             foreach (var aircraft in orderedAircrafts)
             {
-                var latestAircraftMessageTime = aircraft.LastMessage;
-                var minutes = (DateTime.UtcNow - latestAircraftMessageTime).TotalMinutes;
-
-                if (minutes > 5)
+                lock (aircraft.PlaneLock)
                 {
-                    removalList.Add(aircraft);
-                    airPicture.Remove(aircraft);
-                }
+                    var latestAircraftMessageTime = aircraft.LastMessage;
+                    var minutes = (DateTime.UtcNow - latestAircraftMessageTime).TotalMinutes;
 
-                var lastKnownPosition = aircraft.GetLastPosition();
+                    if (minutes > REMOVE_OLD_AIRCRAFT_THRESHOLD)
+                    {
+                        removalList.Add(aircraft);
+                        lock (AIR_PICTURE_LOCK)
+                        {
+                            airPicture.Remove(aircraft);
+                        }
+                        continue;
+                    }
 
-                if (lastKnownPosition != null &&
-                    (DateTime.UtcNow - lastKnownPosition.Generated).TotalMinutes > NewEstimateThreshold)
-                {
-                    aircraft.AddNewEstimatePosition();
+                    var lastKnownPosition = aircraft.GetLastPosition();
+
+
+                    if (lastKnownPosition != null &&
+                        (DateTime.UtcNow - lastKnownPosition.Generated).TotalMinutes > NEW_ESTIMATE_THRESHOLD &&
+                        aircraft.HasValidState())
+                    {
+                        aircraft.AddNewEstimatePosition();
+                    }
                 }
             }
         }
 
-        public static async void UploadChangedAircrafts(DynamoClientRAP client, IEnumerable<RecognizedAircraft> airPicture)
+        public static void UploadChangedAircrafts(DynamoClientRAP client, IEnumerable<RecognizedAircraft> airPicture)
         {
-            var changedAircrafts = airPicture.Where(aircraft => aircraft.HasChanged && aircraft.HasValidState());
-
+            List<RecognizedAircraft> changedAircrafts;
+            lock (AIR_PICTURE_LOCK)
+            {
+                changedAircrafts = airPicture.Where(aircraft => aircraft.HasChanged && aircraft.HasValidState()).ToList();
+            }
             foreach (var aircraft in changedAircrafts)
             {
-
                 bool lockTaken = false;
                 try
                 {
-                    Monitor.TryEnter(aircraft.PlaneLock, new TimeSpan(50), ref lockTaken);
+                    Monitor.TryEnter(aircraft.PlaneLock, new TimeSpan(1000), ref lockTaken);
 
                     if (lockTaken)
                     {
-                        await client.InsertAircraftAsync(aircraft);
-                        aircraft.HasChanged = false;
+                        client.InsertAircraftAsync(aircraft).Wait();
+                        aircraft.HasChanged = false;                  
                     }
                 }
                 finally
@@ -124,10 +161,11 @@ namespace ATCDataserver
 
         public static SBSMessageHelper DataParser(string message)
         {
+            
             // Split when message is null only returns one element with null
             var splitMessage = message.Split(',');
 
-            if (message == string.Empty || splitMessage.Length != MAXMESSAGEFIELDS) { return new SBSMessageHelper(ignore: true); }
+            if (message == string.Empty || splitMessage.Length != MAX_MESSAGE_FIELDS) { return new SBSMessageHelper(ignore: true); }
 
             var sbsMessage = new SBSMessageHelper();
 
@@ -146,27 +184,32 @@ namespace ATCDataserver
             if (!sbsMessage.FieldType.Equals(SBSMessageHelper.MSG)) return;
             if (sbsMessage.FieldType.Equals(SBSMessageHelper.MSG) &&
                 sbsMessage.FieldTransmissionType != SBSMessageHelper.ESAirbornePositionMessage && 
-                sbsMessage.FieldTransmissionType != SBSMessageHelper.ESAirbornePositionMessage &&
+                sbsMessage.FieldTransmissionType != SBSMessageHelper.ESAirborneVelocityMessage &&
                 sbsMessage.FieldTransmissionType != SBSMessageHelper.ESIdentificationAndCategory)
             {
                 return;
             }
 
-            var aircraft = airPicture.FirstOrDefault(aircraft => aircraft.AircraftId.Equals(sbsMessage.FieldAircraftID));
-
-            if (aircraft == null)
+            RecognizedAircraft? aircraft;
+            lock (AIR_PICTURE_LOCK)
             {
-                // no need to lock since aircraft will first receive and then added to the airpicture,
-                // meaning it is not subject to being uploaded until added to airPicture list.
-                aircraft = new RecognizedAircraft(sbsMessage);
-                airPicture.Add(aircraft);
-                return; // after creating aircraft from a single message Aggregation is not needed.
+                aircraft = airPicture.FirstOrDefault(aircraft => aircraft.TransponderId.Equals(sbsMessage.FieldHexIdent));
+
+                if (aircraft == null)
+                {
+                    // no need to lock since aircraft will first receive and then added to the airpicture,
+                    // meaning it is not subject to being uploaded until added to airPicture list.
+                    aircraft = new RecognizedAircraft(sbsMessage);
+                    airPicture.Add(aircraft);
+                    return; // after creating aircraft from a single message Aggregation is not needed.
+                }
             }
 
             lock (aircraft.PlaneLock)
             {
                 AggregateMessage(aircraft, sbsMessage);
             }
+            
         }
 
         public static void AggregateMessage(RecognizedAircraft aircraft, SBSMessageHelper sbsMessage)

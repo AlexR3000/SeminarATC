@@ -11,9 +11,9 @@ namespace RecognizedAirPicture
 {
     public class RecognizedAircraft
     {
-        public static readonly int MAXMEDIANVALUES = 10;
+        public static readonly int MAX_MEDIAN_VALUES = 10;
 
-        public string AircraftId { get; set; }
+        public string TransponderId { get; set; }
         public string Callsign { get; set; }
 
         public List<Position> Positions { get; set; } = new List<Position>();
@@ -35,7 +35,7 @@ namespace RecognizedAirPicture
         // When a plane enters the area for the first time
         public RecognizedAircraft(SBSMessageHelper sbsMessage) 
         {
-            AircraftId = sbsMessage.FieldHexIdent;
+            TransponderId = sbsMessage.FieldHexIdent;
             Callsign = sbsMessage.FieldCallsign;
 
             LastMessageGenerated = sbsMessage.FieldDateMessageGenerated
@@ -55,6 +55,7 @@ namespace RecognizedAirPicture
                     });
                     break;
                 case SBSMessageHelper.ESAirborneVelocityMessage:
+                    
                     GroundSpeed = sbsMessage.FieldGroundSpeed;
                     Track = sbsMessage.FieldTrack;
                     break;
@@ -68,19 +69,16 @@ namespace RecognizedAirPicture
         public bool HasValidState()
         {
             return Track != -1 && GroundSpeed != -1 && Positions.Count >= 3 &&
-                Callsign != string.Empty && AircraftId != string.Empty;
+                Callsign != string.Empty && TransponderId != string.Empty;
         }
 
-        public Position GetLastPosition()
+        public Position? GetLastPosition()
         {
-
-            var lastPosition = Positions.OrderByDescending(position => position.Generated).FirstOrDefault();
-            if (lastPosition == null)
-            {                
-                throw new InvalidOperationException("Can't get last aircraft position because no position is known");
+            lock (PlaneLock)
+            {
+                var lastPosition = Positions.OrderByDescending(position => position.Generated).FirstOrDefault();
+                return lastPosition;
             }
-            return lastPosition;
-
         }
 
         public bool IsOutlierPosition(SBSMessageHelper sbsMessage)
@@ -91,33 +89,36 @@ namespace RecognizedAirPicture
                 .Count();
 
             var lastPosition = GetLastPosition();
-            if (lastPosition != null)
+            if (lastPosition == null)
             {
-                var distance = Geolocation.GeoCalculator.GetDistance(lastPosition.Latitude, lastPosition.Longitude,
+                return false;
+            }
+
+            var distance = Geolocation.GeoCalculator.GetDistance(lastPosition.Latitude, lastPosition.Longitude,
                     sbsMessage.FieldLatitude, sbsMessage.FieldLongitude);
 
-                var planeSpeed = GroundSpeed;
-                var tolerance = 0.5;
-                if (planeSpeed == -1) 
-                {
-                    // TODO check if correct km/h or knots
-                    // In case the actual speed is unknown
-                    planeSpeed = 800;
-                }
-                return distance > planeSpeed/3600 + tolerance + Math.Pow(countedEstimates, 2);
+            var planeSpeed = GroundSpeed;
+            var tolerance = 0.5;
+            if (planeSpeed == -1)
+            {
+                // TODO check if correct km/h or knots
+                // In case the actual speed is unknown
+                planeSpeed = 800;
             }
-            return false;
+            return distance > planeSpeed / 3600 + tolerance + Math.Pow(countedEstimates, 2);
         }
 
         public static double ApplyMedianFilter(ICollection<int> lastValues) 
         {
+            if (lastValues.Count == 0) { return 0; }
+
             var sortedValues = lastValues.OrderBy(value => value).ToList();
 
             var isEven = sortedValues.Count % 2 == 0;
             double median = 0;
             if (isEven)
             {
-                median = (sortedValues[sortedValues.Count / 2] + sortedValues[sortedValues.Count / 2 + 1]) / 2;
+                median = (sortedValues[sortedValues.Count / 2 - 1] + sortedValues[sortedValues.Count / 2]) / 2;
             }
             else
             {
@@ -130,21 +131,21 @@ namespace RecognizedAirPicture
         {
             if (valueCollection == null) {  return; }
 
-            var values = valueCollection as List<T>;
+            var values = (List<T>)valueCollection;
 
-            if (values?.Count >= MAXMEDIANVALUES)
+            if (values.Count >= MAX_MEDIAN_VALUES)
             {
                 values.RemoveAt(0);
             }
 
-            values?.Append(value);
+            values.Add(value);
         }
 
         public void AddNewEstimatePosition()
         {
             var lastPosition = GetLastPosition();
 
-            if (lastPosition is null) { return; }
+            if (lastPosition == null) { return; }
 
             const double ratioKnotToKmPerSecond = 0.000514;
             // seconds in the future to calculate the next estimate position.

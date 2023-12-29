@@ -14,7 +14,10 @@ print ("Connection established")
 
 blk_cnt = 0
 msg_cnt = 0
-while blk_cnt < BLOCK_MAX:
+
+test_count = 0
+stop = True
+while stop:
     data = str(s.recv(100000)) 
     #print(f"----------Received Block " +  str(blk_cnt)
     #                  + " with len " + str(len(data))
@@ -24,7 +27,14 @@ while blk_cnt < BLOCK_MAX:
     contents = data[2:-1]  #byte-string-lexicals
     msg_list = contents.split("\\r\\n")
     for msg in msg_list:
+        if msg == "":
+            test_count = test_count + 1
+            if test_count >= 10:
+                input()
+        else:
+            test_count = 0
         print("Blk " + str(blk_cnt) + " Msg " + str(msg_cnt) + "  " + msg )
         msg_cnt = msg_cnt + 1
+        
 print ("done")
 input()
