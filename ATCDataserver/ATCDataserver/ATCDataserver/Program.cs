@@ -12,8 +12,6 @@ namespace ATCDataserver
 
         private static readonly int MAX_MESSAGE_FIELDS = 22;
 
-        private static readonly object AIR_PICTURE_LOCK = new object(); 
-
         public static void Main()
         {
             var airPicture = new List<RecognizedAircraft>();
@@ -23,42 +21,6 @@ namespace ATCDataserver
 
             
             var dataStreamTask = Task.Run(() => receiver.StreamReceive());
-
-
-
-
-            /*
-            var messageProcessing = Task.Run(() =>
-            {
-                while (true)
-                {
-                    var hasReceived = receiver.ReceivedMessageQueue.TryDequeue(out var receivedMessage);
-
-                    if (!hasReceived || receivedMessage == null)
-                    {
-                        continue;
-                    }
-                    var sbsMessage = DataParser(receivedMessage);
-                    ProcessMessage(airPicture, sbsMessage);
-                }
-            });
-
-
-            var dataStoreManager = Task.Run(() =>
-            {
-                var client = new DynamoClientRAP();
-                while (true)
-                {
-                    UploadChangedAircrafts(client, airPicture);
-                    Thread.Sleep(100);
-                }
-            });
-
-            var dataManager = Task.Run(() =>
-            {
-                ManageData(airPicture, aircraftForRemoval);
-            });*/
-
 
             while (true) 
             {
@@ -71,7 +33,7 @@ namespace ATCDataserver
                 var sbsMessage = DataParser(receivedMessage);
                 ProcessMessage(airPicture, sbsMessage);
 
-                ManageDataIteration(airPicture, aircraftForRemoval);
+                ManageDataIteration(airPicture);
 
                 var client = new DynamoClientRAP();
                 UploadChangedAircrafts(client, airPicture);
@@ -90,71 +52,49 @@ namespace ATCDataserver
         // Manage the data such as calculating new positions using extrapolation
         // and marking aircrafts as obsolete when they have not received updates in a while.
 
-        public static void ManageDataIteration(List<RecognizedAircraft> airPicture, List<RecognizedAircraft> removalList)
+        public static void ManageDataIteration(List<RecognizedAircraft> airPicture)
         {
             List<RecognizedAircraft> orderedAircrafts;
-            lock (AIR_PICTURE_LOCK)
-            {
-                orderedAircrafts = airPicture.OrderBy(aircraft => aircraft.LastMessage).ToList();
-            }
+
+            orderedAircrafts = airPicture.OrderBy(aircraft => aircraft.LastMessage).ToList();
 
             foreach (var aircraft in orderedAircrafts)
             {
-                lock (aircraft.PlaneLock)
+
+                var latestAircraftMessageTime = aircraft.LastMessage;
+                var minutes = (DateTime.UtcNow - latestAircraftMessageTime).TotalMinutes;
+
+                if (minutes > REMOVE_OLD_AIRCRAFT_THRESHOLD)
                 {
-                    var latestAircraftMessageTime = aircraft.LastMessage;
-                    var minutes = (DateTime.UtcNow - latestAircraftMessageTime).TotalMinutes;
-
-                    if (minutes > REMOVE_OLD_AIRCRAFT_THRESHOLD)
-                    {
-                        removalList.Add(aircraft);
-                        lock (AIR_PICTURE_LOCK)
-                        {
-                            airPicture.Remove(aircraft);
-                        }
-                        continue;
-                    }
-
-                    var lastKnownPosition = aircraft.GetLastPosition();
-
-
-                    if (lastKnownPosition != null &&
-                        (DateTime.UtcNow - lastKnownPosition.Generated).TotalMinutes > NEW_ESTIMATE_THRESHOLD &&
-                        aircraft.HasValidState())
-                    {
-                        aircraft.AddNewEstimatePosition();
-                    }
+                    airPicture.Remove(aircraft);
+                    // DynamoDb automatically deletes the uploaded version once it expires
+                    // no need to do further processing on aircraft
+                    continue;
                 }
+
+                var lastKnownPosition = aircraft.GetLastPosition();
+
+
+                if (lastKnownPosition != null &&
+                    (DateTime.UtcNow - lastKnownPosition.Generated).TotalMinutes > NEW_ESTIMATE_THRESHOLD &&
+                    aircraft.HasValidState())
+                {
+                    aircraft.AddNewEstimatePosition();
+                }
+                
             }
         }
 
         public static void UploadChangedAircrafts(DynamoClientRAP client, IEnumerable<RecognizedAircraft> airPicture)
         {
             List<RecognizedAircraft> changedAircrafts;
-            lock (AIR_PICTURE_LOCK)
-            {
-                changedAircrafts = airPicture.Where(aircraft => aircraft.HasChanged && aircraft.HasValidState()).ToList();
-            }
+
+            changedAircrafts = airPicture.Where(aircraft => aircraft.HasChanged && aircraft.HasValidState()).ToList();
+            
             foreach (var aircraft in changedAircrafts)
             {
-                bool lockTaken = false;
-                try
-                {
-                    Monitor.TryEnter(aircraft.PlaneLock, new TimeSpan(1000), ref lockTaken);
-
-                    if (lockTaken)
-                    {
-                        client.InsertAircraftAsync(aircraft).Wait();
-                        aircraft.HasChanged = false;                  
-                    }
-                }
-                finally
-                {
-                    if (lockTaken)
-                    {
-                        Monitor.Exit(aircraft.PlaneLock);
-                    }
-                }
+                client.InsertAircraftAsync(aircraft).Wait();
+                aircraft.HasChanged = false;                  
             }
         }
 
@@ -191,24 +131,20 @@ namespace ATCDataserver
             }
 
             RecognizedAircraft? aircraft;
-            lock (AIR_PICTURE_LOCK)
-            {
-                aircraft = airPicture.FirstOrDefault(aircraft => aircraft.TransponderId.Equals(sbsMessage.FieldHexIdent));
 
-                if (aircraft == null)
-                {
-                    // no need to lock since aircraft will first receive and then added to the airpicture,
-                    // meaning it is not subject to being uploaded until added to airPicture list.
-                    aircraft = new RecognizedAircraft(sbsMessage);
-                    airPicture.Add(aircraft);
-                    return; // after creating aircraft from a single message Aggregation is not needed.
-                }
-            }
+            aircraft = airPicture.FirstOrDefault(aircraft => aircraft.TransponderId.Equals(sbsMessage.FieldHexIdent));
 
-            lock (aircraft.PlaneLock)
+            if (aircraft == null)
             {
-                AggregateMessage(aircraft, sbsMessage);
+                // no need to lock since aircraft will first receive and then added to the airpicture,
+                // meaning it is not subject to being uploaded until added to airPicture list.
+                aircraft = new RecognizedAircraft(sbsMessage);
+                airPicture.Add(aircraft);
+                return; // after creating aircraft from a single message Aggregation is not needed.
             }
+            
+            AggregateMessage(aircraft, sbsMessage);
+
             
         }
 
@@ -236,11 +172,8 @@ namespace ATCDataserver
                     break;
                 case SBSMessageHelper.ESAirborneVelocityMessage:
 
-                    RecognizedAircraft.AddNewValueToFixedSizeCollection(sbsMessage.FieldTrack, aircraft.LastTracks);
-                    aircraft.Track = (int)RecognizedAircraft.ApplyMedianFilter(aircraft.LastTracks);
-
-                    RecognizedAircraft.AddNewValueToFixedSizeCollection(sbsMessage.FieldGroundSpeed, aircraft.LastSpeeds);
-                    aircraft.GroundSpeed = (int)RecognizedAircraft.ApplyMedianFilter(aircraft.LastSpeeds);
+                    aircraft.Track = sbsMessage.FieldTrack;
+                    aircraft.GroundSpeed = sbsMessage.FieldGroundSpeed;
                     break;
                 default:
                     break;

@@ -104,7 +104,6 @@ namespace ATCDataserver
 
             for (int i = 0; i < splitMessage.Length - 1; i++)
             {
-                Console.WriteLine($"{count++} Received from server: {splitMessage[i]}");
                 ReceivedMessageQueue.Enqueue(splitMessage[i]);
             }
             

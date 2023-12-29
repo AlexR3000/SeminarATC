@@ -54,11 +54,8 @@ namespace DynamoDBClient
                 return false;
             }
 
-
             try
             {
-
-
                 var request = new PutItemRequest
                 {
                     TableName = "RecognizedAirPicture",
