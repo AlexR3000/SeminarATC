@@ -12,31 +12,27 @@ namespace ATCDataserver
 
         private static readonly int MAX_MESSAGE_FIELDS = 22;
 
+        private static readonly object AIR_PICTURE_LOCK = new object();
+
+        private static List<RecognizedAircraft> _airPicture = new List<RecognizedAircraft>();
+
         public static void Main()
-        {
-            var airPicture = new List<RecognizedAircraft>();
-            var aircraftForRemoval = new List<RecognizedAircraft>();
-
+        {            
             var receiver = new DataReceiver("141.79.10.172", 30003);
-
+            receiver.DataReceived += HandleReceivedData;
             
             var dataStreamTask = Task.Run(() => receiver.StreamReceive());
 
+
+
             while (true) 
             {
-                var hasReceived = receiver.ReceivedMessageQueue.TryDequeue(out var receivedMessage);
 
-                if (!hasReceived || receivedMessage == null)
-                {
-                    continue;
-                }
-                var sbsMessage = DataParser(receivedMessage);
-                ProcessMessage(airPicture, sbsMessage);
 
-                ManageDataIteration(airPicture);
+                ManageDataIteration(_airPicture);
 
                 var client = new DynamoClientRAP();
-                UploadChangedAircrafts(client, airPicture);
+                UploadChangedAircrafts(client, _airPicture);
 
             }
         }
@@ -56,8 +52,10 @@ namespace ATCDataserver
         {
             List<RecognizedAircraft> orderedAircrafts;
 
-            orderedAircrafts = airPicture.OrderBy(aircraft => aircraft.LastMessage).ToList();
-
+            lock (AIR_PICTURE_LOCK)
+            {
+                orderedAircrafts = airPicture.OrderBy(aircraft => aircraft.LastMessage).ToList();
+            }
             foreach (var aircraft in orderedAircrafts)
             {
 
@@ -66,7 +64,10 @@ namespace ATCDataserver
 
                 if (minutes > REMOVE_OLD_AIRCRAFT_THRESHOLD)
                 {
-                    airPicture.Remove(aircraft);
+                    lock (AIR_PICTURE_LOCK)
+                    {
+                        airPicture.Remove(aircraft);
+                    }
                     // DynamoDb automatically deletes the uploaded version once it expires
                     // no need to do further processing on aircraft
                     continue;
@@ -89,8 +90,10 @@ namespace ATCDataserver
         {
             List<RecognizedAircraft> changedAircrafts;
 
-            changedAircrafts = airPicture.Where(aircraft => aircraft.HasChanged && aircraft.HasValidState()).ToList();
-            
+            lock (AIR_PICTURE_LOCK)
+            {
+                changedAircrafts = airPicture.Where(aircraft => aircraft.HasChanged && aircraft.HasValidState()).ToList();
+            }
             foreach (var aircraft in changedAircrafts)
             {
                 client.InsertAircraftAsync(aircraft).Wait();
@@ -116,7 +119,16 @@ namespace ATCDataserver
         }
 
 
-        public static void ProcessMessage(List<RecognizedAircraft> airPicture, SBSMessageHelper sbsMessage)
+        public static void HandleReceivedData(string receivedMessage)
+        {
+            if (receivedMessage == string.Empty)
+            {
+                return;
+            }
+            var sbsMessage = DataParser(receivedMessage);
+            ProcessMessage(_airPicture, sbsMessage);
+        }
+        private static void ProcessMessage(List<RecognizedAircraft> airPicture, SBSMessageHelper sbsMessage)
         {
             // TODO think of better solution
             // Returns when messagetype is not whitelisted
@@ -132,15 +144,18 @@ namespace ATCDataserver
 
             RecognizedAircraft? aircraft;
 
-            aircraft = airPicture.FirstOrDefault(aircraft => aircraft.TransponderId.Equals(sbsMessage.FieldHexIdent));
-
-            if (aircraft == null)
+            lock (AIR_PICTURE_LOCK)
             {
-                // no need to lock since aircraft will first receive and then added to the airpicture,
-                // meaning it is not subject to being uploaded until added to airPicture list.
-                aircraft = new RecognizedAircraft(sbsMessage);
-                airPicture.Add(aircraft);
-                return; // after creating aircraft from a single message Aggregation is not needed.
+                aircraft = airPicture.FirstOrDefault(aircraft => aircraft.TransponderId.Equals(sbsMessage.FieldHexIdent));
+
+                if (aircraft == null)
+                {
+                    // no need to lock since aircraft will first receive and then added to the airpicture,
+                    // meaning it is not subject to being uploaded until added to airPicture list.
+                    aircraft = new RecognizedAircraft(sbsMessage);
+                    airPicture.Add(aircraft);
+                    return; // after creating aircraft from a single message Aggregation is not needed.
+                }
             }
             
             AggregateMessage(aircraft, sbsMessage);

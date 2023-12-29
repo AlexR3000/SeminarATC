@@ -92,9 +92,11 @@ namespace RecognizedAirPicture
 
         public Position? GetLastPosition()
         {
-            
-            var lastPosition = Positions.OrderByDescending(position => position.Generated).FirstOrDefault();
-            return lastPosition;
+            lock (Positions)
+            {
+                var lastPosition = Positions.OrderByDescending(position => position.Generated).FirstOrDefault();
+                return lastPosition;
+            }
             
         }
 

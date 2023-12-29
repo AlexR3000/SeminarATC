@@ -17,7 +17,7 @@ namespace ATCDataserver
         private string _host;
         private int _port;
 
-        public ConcurrentQueue<string> ReceivedMessageQueue { get; set; } = new ConcurrentQueue<string>();
+        public event Action<string>? DataReceived;
 
         public DataReceiver(string host, int port)
         {
@@ -101,12 +101,15 @@ namespace ATCDataserver
             // last element of split is always incomplete
             leftOverBuffer = splitMessage.Last();
 
-
             for (int i = 0; i < splitMessage.Length - 1; i++)
             {
-                ReceivedMessageQueue.Enqueue(splitMessage[i]);
-            }
-            
+                OnDataReceived(splitMessage[i]);
+            }   
+        }
+
+        public virtual void OnDataReceived(string message)
+        {
+            DataReceived?.Invoke(message);
         }
 
     }
