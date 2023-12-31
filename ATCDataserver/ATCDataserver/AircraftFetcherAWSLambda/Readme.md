@@ -1,32 +1,12 @@
-# AWS Lambda Function Using Top Level Statements
+# AWS Lambda Empty Function Project
 
 This starter project consists of:
-* Function.cs - file contain C# top level statements that define the function to be called for each event and starts the Lambda runtime client.
+* Function.cs - class file containing a class with a single function handler method
 * aws-lambda-tools-defaults.json - default argument settings for use with Visual Studio and command line deployment tools for AWS
 
 You may also have a test project depending on the options selected.
 
-The generated function handler is a simple method accepting a string argument that returns the uppercase equivalent of the input string. Replace the body of this method, and parameters, to suit your needs.
-
-## Executable Assembly
-
-.NET Lambda projects that use C# top level statements like this project must be deployed as an executable assembly instead of a class library. To indicate to Lambda that the .NET function is an executable assembly the 
-Lambda function handler value is set to the .NET Assembly name. This is different then deploying as a class library where the function handler string includes the assembly, type and method name.
-
-To deploy as an executable assembly the Lambda runtime client must be started to listen for incoming events to process. To start
-the Lambda runtime client add the `Amazon.Lambda.RuntimeSupport` NuGet package and add the following code at the end of the
-of the file containing top-level statements to start the runtime.
-
-```csharp
-await LambdaBootstrapBuilder.Create(handler, new DefaultLambdaJsonSerializer())
-        .Build()
-        .RunAsync();
-```
-
-Pass into the Lambda runtime client a function handler as either an `Action<>` or `Func<>` for the code that 
-should be called for each event. If the handler takes in an input event besides `System.IO.Stream` then
-the JSON serializer must also be passed into the `Create` method.
-
+The generated function handler is a simple method accepting a string argument that returns the uppercase equivalent of the input string. Replace the body of this method, and parameters, to suit your needs. 
 
 ## Here are some steps to follow from Visual Studio:
 
@@ -56,8 +36,14 @@ If already installed check if new version is available.
     dotnet tool update -g Amazon.Lambda.Tools
 ```
 
+Execute unit tests
+```
+    cd "AircraftFetcherAWSLambda/test/AircraftFetcherAWSLambda.Tests"
+    dotnet test
+```
+
 Deploy function to AWS Lambda
 ```
-    cd "LambdaAircraftFetcher/src/LambdaAircraftFetcher"
+    cd "AircraftFetcherAWSLambda/src/AircraftFetcherAWSLambda"
     dotnet lambda deploy-function
 ```

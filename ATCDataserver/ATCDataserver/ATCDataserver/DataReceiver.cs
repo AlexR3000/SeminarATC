@@ -39,7 +39,6 @@ namespace ATCDataserver
                 var buffer = new byte[4096];
 
                 var leftOverBuffer = "";
-                var count = 0;
 
                 var restartTimer = DateTime.UtcNow;
                 var resetTimer = true;
@@ -48,7 +47,7 @@ namespace ATCDataserver
                     
                     if (tcpClient.Available > 0)
                     {
-                        EnqueueReceivedMessages(stream, buffer, ref leftOverBuffer, ref count);
+                        InvokeReceivedMessages(stream, buffer, ref leftOverBuffer);
                         resetTimer = true;
                     }
                     else // in case that seemingly the base station stops sending messages, restart connection
@@ -85,10 +84,8 @@ namespace ATCDataserver
       
         }
 
-        public void EnqueueReceivedMessages(NetworkStream stream, byte[] buffer, ref string leftOverBuffer, ref int count)
+        public void InvokeReceivedMessages(NetworkStream stream, byte[] buffer, ref string leftOverBuffer)
         {
-
-
             int bytesRead = stream.ReadAsync(buffer, 0, buffer.Length).Result;
 
             string receivedMessage = Encoding.UTF8.GetString(buffer, 0, bytesRead);
@@ -103,6 +100,7 @@ namespace ATCDataserver
 
             for (int i = 0; i < splitMessage.Length - 1; i++)
             {
+                Console.WriteLine($"Received from server: {splitMessage[i]}");
                 OnDataReceived(splitMessage[i]);
             }   
         }

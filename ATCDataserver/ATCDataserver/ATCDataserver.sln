@@ -22,7 +22,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UnitTests", "UnitTests\Unit
 		{98F7B505-2C9C-4ABE-8E7C-4763EB43DB9F} = {98F7B505-2C9C-4ABE-8E7C-4763EB43DB9F}
 	EndProjectSection
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LambdaAircraftFetcher", "LambdaAircraftFetcher\LambdaAircraftFetcher.csproj", "{3A4CBFD1-4D8A-4656-838D-E020D3D6B20E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AircraftFetcherAWSLambda", "AircraftFetcherAWSLambda\AircraftFetcherAWSLambda.csproj", "{C4446D42-58F6-464D-8BD8-A9ED3645A249}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -50,10 +50,10 @@ Global
 		{C1FE5F84-FD3F-4B91-99F1-E8AB42872D17}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C1FE5F84-FD3F-4B91-99F1-E8AB42872D17}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C1FE5F84-FD3F-4B91-99F1-E8AB42872D17}.Release|Any CPU.Build.0 = Release|Any CPU
-		{3A4CBFD1-4D8A-4656-838D-E020D3D6B20E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{3A4CBFD1-4D8A-4656-838D-E020D3D6B20E}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{3A4CBFD1-4D8A-4656-838D-E020D3D6B20E}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{3A4CBFD1-4D8A-4656-838D-E020D3D6B20E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C4446D42-58F6-464D-8BD8-A9ED3645A249}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C4446D42-58F6-464D-8BD8-A9ED3645A249}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C4446D42-58F6-464D-8BD8-A9ED3645A249}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C4446D42-58F6-464D-8BD8-A9ED3645A249}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

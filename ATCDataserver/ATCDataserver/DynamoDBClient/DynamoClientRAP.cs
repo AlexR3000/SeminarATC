@@ -45,7 +45,7 @@ namespace DynamoDBClient
             
             var planeId = aircraft.TransponderId;
             var callsign = aircraft.Callsign;
-            var estimationCount = aircraft.Positions.Where(position => position.IsEstimated).Count();
+            var estimationCount = aircraft.GetPositionsCopy().Where(position => position.IsEstimated).Count();
             var position = aircraft.GetLastPosition();
 
             // in case position doesn't exist don't upload

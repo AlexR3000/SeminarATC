@@ -16,7 +16,7 @@ namespace RecognizedAirPicture
         public string TransponderId { get; set; }
         public string Callsign { get; set; }
 
-        public List<Position> Positions { get; set; } = new List<Position>();
+        private List<Position> _positions { get; set; } = new List<Position>();
 
         private int _groundSpeed = -1;
         private List<int> _lastSpeeds { get; set; } = new List<int>();
@@ -65,7 +65,7 @@ namespace RecognizedAirPicture
             switch (sbsMessage.FieldTransmissionType)
             {
                 case SBSMessageHelper.ESAirbornePositionMessage:
-                    Positions.Add(new Position
+                    _positions.Add(new Position
                     {
                         Latitude = sbsMessage.FieldLatitude,
                         Longitude = sbsMessage.FieldLongitude,
@@ -86,15 +86,15 @@ namespace RecognizedAirPicture
 
         public bool HasValidState()
         {
-            return Track != -1 && GroundSpeed != -1 && Positions.Count >= 3 &&
+            return Track != -1 && GroundSpeed != -1 && _positions.Count >= 3 &&
                 Callsign != string.Empty && TransponderId != string.Empty;
         }
 
         public Position? GetLastPosition()
         {
-            lock (Positions)
+            lock (_positions)
             {
-                var lastPosition = Positions.OrderByDescending(position => position.Generated).FirstOrDefault();
+                var lastPosition = _positions.OrderByDescending(position => position.Generated).FirstOrDefault();
                 return lastPosition;
             }
             
@@ -103,10 +103,13 @@ namespace RecognizedAirPicture
         public bool IsOutlierPosition(SBSMessageHelper sbsMessage)
         {
             // count the estimates before the last actual message
-            var countedEstimates = Positions.OrderByDescending(position => position.Generated)
-                .TakeWhile(position => position.IsEstimated)
-                .Count();
-
+            int countedEstimates;
+            lock (_positions)
+            {
+                countedEstimates = _positions.OrderByDescending(position => position.Generated)
+                    .TakeWhile(position => position.IsEstimated)
+                    .Count();
+            }
             var lastPosition = GetLastPosition();
             if (lastPosition == null)
             {
@@ -118,13 +121,13 @@ namespace RecognizedAirPicture
 
             var planeSpeed = GroundSpeed;
             var tolerance = 0.5;
+            var knotToKMHConversionValue = 1.852;
             if (planeSpeed == -1)
             {
-                // TODO check if correct km/h or knots
                 // In case the actual speed is unknown
-                planeSpeed = 800;
+                planeSpeed = 400;
             }
-            return distance > planeSpeed / 3600 + tolerance + Math.Pow(countedEstimates, 2);
+            return distance > (planeSpeed * knotToKMHConversionValue) / 3600 + tolerance + Math.Pow(countedEstimates, 2);
         }
 
         public static double ApplyMedianFilter(ICollection<int> lastValues) 
@@ -171,7 +174,29 @@ namespace RecognizedAirPicture
             const double PositionIn = 10;
 
             var distance = GroundSpeed * ratioKnotToKmPerSecond * PositionIn;
-            Positions.Add(CalculateDestinationPoint(lastPosition.Latitude, lastPosition.Longitude, Track, distance));
+
+            lock (_positions)
+            {
+                _positions.Add(CalculateDestinationPoint(lastPosition.Latitude, lastPosition.Longitude, Track, distance));
+            }
+        }
+
+        public void AddNewPosition(Position position)
+        {
+            if (position == null) { return; }
+
+            lock (_positions)
+            {
+                _positions.Add(position);
+            }
+        }
+
+        public List<Position> GetPositionsCopy()
+        {
+            lock (_positions)
+            {
+                return new List<Position>(_positions);
+            }
         }
 
         /// <summary>

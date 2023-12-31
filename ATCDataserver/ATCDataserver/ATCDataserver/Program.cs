@@ -182,7 +182,7 @@ namespace ATCDataserver
                                 .ToUniversalTime(),
                         };
 
-                        aircraft.Positions.Add(newPosition);
+                        aircraft.AddNewPosition(newPosition);
                     }
                     break;
                 case SBSMessageHelper.ESAirborneVelocityMessage:

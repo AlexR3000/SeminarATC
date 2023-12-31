@@ -37,7 +37,7 @@ namespace RecognizedAirPicture
         // some database id that appears to be unused by hsog base station
         public string FieldAircraftID { get; set; } = string.Empty;
 
-        // transponder id which is part of every message
+        // mode s transponder id which is part of every message
         public string FieldHexIdent {  get; set; } = string.Empty;
 
         public string FieldFlightID { get; set; } = string.Empty;
