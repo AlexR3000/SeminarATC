@@ -18,22 +18,5 @@ namespace RecognizedAirPicture
         {
             IsEstimated = false;
         }
-
-
-        override
-        public string ToString()
-        {
-            var builder = new StringBuilder();
-
-            builder.Append(Latitude);
-            builder.Append(':');
-            builder.Append(Longitude);
-            builder.Append(':');
-            builder.Append(Generated);
-            builder.Append(':');
-            builder.Append(IsEstimated);  
-            return builder.ToString();
-        }
-
     }
 }

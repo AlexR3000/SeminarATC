@@ -9,7 +9,6 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 
-// TODO cleanup unnecessary methods
 namespace DynamoDBClient
 {
     // RAP Recognized Air Picture
@@ -31,21 +30,13 @@ namespace DynamoDBClient
             _client = client;
         }
 
-        public Task<ScanResponse> GetAllFromTableAsync(string tableName)
-        {
-            var conditions = new List<string>();
-
-            var result = _client.ScanAsync(tableName, conditions);
-
-            return result;
-        }
 
         public async Task<bool> InsertAircraftAsync(RecognizedAircraft aircraft)
         {
             
             var planeId = aircraft.TransponderId;
             var callsign = aircraft.Callsign;
-            var estimationCount = aircraft.GetPositionsCopy().Where(position => position.IsEstimated).Count();
+            var estimationCount = aircraft.EstimationsSinceLastActualPosition;
             var position = aircraft.GetLastPosition();
 
             // in case position doesn't exist don't upload
@@ -64,10 +55,13 @@ namespace DynamoDBClient
                     { "ID", new AttributeValue { S=planeId} },
                     // string set only can have each value once but since the time is part of the stored string
                     // it should be no issue
-                    {"Position", new AttributeValue { S=position.ToString()} },
+                    {"Latitude", new AttributeValue { S=position.Latitude.ToString()} },
+                    {"Longitude", new AttributeValue { S=position.Longitude.ToString()} },
+                    {"PositionCreated", new AttributeValue{S=position.Generated.ToString() } },
                     {"Estimations", new AttributeValue {N=estimationCount.ToString()} },
+                    {"Track", new AttributeValue {N=aircraft.Track.ToString() } },
                     {"Callsign", new AttributeValue { S=callsign} },
-                    {"ExpireAt", new AttributeValue{N=DateTimeOffset.UtcNow.AddMinutes(5).ToUnixTimeSeconds().ToString() } }
+                    {"ExpireAt", new AttributeValue{N=DateTimeOffset.UtcNow.AddMinutes(1).ToUnixTimeSeconds().ToString() } }
                 }
                 };
 
@@ -80,23 +74,6 @@ namespace DynamoDBClient
                 Debug.WriteLine(ex.Message);
                 return false;
             }
-        }
-
-        public async Task<bool> DeleteAircraftAsync(RecognizedAircraft aircraft)
-        {
-            var key = new Dictionary<string, AttributeValue>
-            {
-                ["ID"] = new AttributeValue { S = aircraft.TransponderId },
-            };
-
-            var request = new DeleteItemRequest
-            {
-                TableName = "RecognizedAirPicture",
-                Key = key,
-            };
-
-            var response = await _client.DeleteItemAsync(request);
-            return response.HttpStatusCode == System.Net.HttpStatusCode.OK;
         }
     }
 }

@@ -21,6 +21,8 @@ namespace RecognizedAirPicture
         public const int AllCallReply = 8;
 
         public const string MSG = "MSG";
+        public const string SEL = "SEL";
+        public const string ID = "ID";
 
 
         // type based
@@ -81,23 +83,36 @@ namespace RecognizedAirPicture
 
             FieldCallsign = splitMessage[(int)MessageFieldNumbers.Callsign];
 
-            if (double.TryParse(splitMessage[(int)MessageFieldNumbers.Latitude],NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out double latitude))
+            // special case for faulty messages that are send without any values for them
+            var hasLatitude = double.TryParse(splitMessage[(int)MessageFieldNumbers.Latitude],
+                NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out double latitude);
+            var hasLongitude = double.TryParse(splitMessage[(int)MessageFieldNumbers.Longitude], 
+                NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out double longitude);
+            if ((!hasLatitude || !hasLongitude) && FieldTransmissionType == ESAirbornePositionMessage)
+            {
+                IgnoreMessage = true;
+            }
+
+            if (hasLatitude)
             {
                 FieldLatitude = latitude;
             }
-            if (double.TryParse(splitMessage[(int)MessageFieldNumbers.Longitude], NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out double longitude))
+            if (hasLongitude)
             {
                 FieldLongitude = longitude;
             }
-            if (int.TryParse(splitMessage[(int)MessageFieldNumbers.Altitude], NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out int altitude))
+            if (int.TryParse(splitMessage[(int)MessageFieldNumbers.Altitude],
+                NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out int altitude))
             {
                 FieldAltitude = altitude;
             }
-            if (int.TryParse(splitMessage[(int)MessageFieldNumbers.GroundSpeed], NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out int groundspeed))
+            if (int.TryParse(splitMessage[(int)MessageFieldNumbers.GroundSpeed], 
+                NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out int groundspeed))
             {
                 FieldGroundSpeed = groundspeed;
             }
-            if (int.TryParse(splitMessage[(int)MessageFieldNumbers.Track], NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out int track))
+            if (int.TryParse(splitMessage[(int)MessageFieldNumbers.Track], 
+                NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out int track))
             {
                 FieldTrack = track;
             }

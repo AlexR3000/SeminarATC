@@ -1,0 +1,39 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+
+Resources:
+  AircraftFetcher:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: AircraftFetcherAWSLambda::AircraftFetcherAWSLambda.Function::FunctionHandler
+      Runtime: dotnet6
+      CodeUri: .\AircraftFetcherAWSLambda\bin\Debug\net6.0
+      MemorySize: 256
+      Timeout: 10
+      Environment:
+        Variables:
+          AWS_PROFILE: local
+      Events:
+        MyApi:
+          Type: Api
+          Properties:
+            Path: /recognizedAirPicture/hso
+            Method: get
+
+
+  DynamoDBRecognizedAirPicture:
+    Type: AWS::DynamoDB::Table
+    Properties: 
+      TableName: RecognizedAirPicture           
+      AttributeDefinitions: 
+        - AttributeName: ID
+          AttributeType: S
+      KeySchema: 
+        - AttributeName: ID
+          KeyType: HASH
+      TimeToLiveSpecification:
+        AttributeName: ExpireAt
+        Enabled: true
+      ProvisionedThroughput: 
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 5

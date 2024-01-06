@@ -38,6 +38,8 @@ namespace DynamoDbSetup
 
             var enableTTLResult = EnableTTLAsync(client, "RecognizedAirPicture");
 
+            while (enableTTLResult.IsCompleted != true) { }
+
         }
 
         static async Task EnableTTLAsync(IAmazonDynamoDB client, string tableName)
@@ -130,9 +132,7 @@ namespace DynamoDbSetup
             };
 
             TableStatus status;
-            int sleepDuration = 2000;
 
-            System.Threading.Thread.Sleep(sleepDuration);
             var describeTableResponse = await client.DescribeTableAsync(request);
             status = describeTableResponse.Table.TableStatus;
 
@@ -145,7 +145,7 @@ namespace DynamoDbSetup
 
                 var requestDelete = new DeleteTableRequest
                 {
-                    TableName = "Persons"
+                    TableName = "RecognizedAirPicture"
                 };
 
                 return await client.DeleteTableAsync(requestDelete);

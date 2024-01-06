@@ -1,16 +1,22 @@
-﻿using ATCDataserver;
+﻿using Amazon.DynamoDBv2;
+using Amazon.Runtime.CredentialManagement;
+using ATCDataserver;
 using DynamoDBClient;
 using RecognizedAirPicture;
 using System.Collections.Concurrent;
+using System.Diagnostics;
+using System.Security.Authentication;
 
 namespace ATCDataserver
 {
     public class DataServerMain
     {
-        private static readonly int NEW_ESTIMATE_THRESHOLD = 1;
-        private static readonly int REMOVE_OLD_AIRCRAFT_THRESHOLD = 1;
+        private static readonly int NEW_ESTIMATE_THRESHOLD_IN_SECONDS = 5; // in seconds
+        private static readonly int REMOVE_OLD_AIRCRAFT_THRESHOLD = 2; // in minutes
 
         private static readonly int MAX_MESSAGE_FIELDS = 22;
+
+        private static readonly int MAX_ALLOWED_ESTIMATES = 15;
 
         private static readonly object AIR_PICTURE_LOCK = new object();
 
@@ -24,26 +30,29 @@ namespace ATCDataserver
             var dataStreamTask = Task.Run(() => receiver.StreamReceive());
 
 
+            var profiles = new CredentialProfileStoreChain();
+            var requestedProfileName = "atc";
+            if (!profiles.TryGetAWSCredentials(requestedProfileName, out var awsCredentials))
+            {
+                throw new InvalidCredentialException($"Profile \"{requestedProfileName}\" does not exist");
+            }
+
+            AmazonDynamoDBConfig clientConfig = new AmazonDynamoDBConfig
+            {
+                ServiceURL = "http://127.0.0.1:8000"
+            };
+
+            var awsClient = new AmazonDynamoDBClient(awsCredentials, clientConfig);
+
+            var client = new DynamoClientRAP(awsClient);
 
             while (true) 
             {
-
-
-                ManageDataIteration(_airPicture);
-
-                var client = new DynamoClientRAP();
+                ManageDataIteration(_airPicture);   
                 UploadChangedAircrafts(client, _airPicture);
-
             }
         }
 
-        public static async void DeleteRemovedAircrafts(DynamoClientRAP client, List<RecognizedAircraft> aircraftsForRemoval) 
-        {
-            foreach (var aircraft in aircraftsForRemoval) 
-            {
-                await client.DeleteAircraftAsync(aircraft);
-            }
-        }
 
         // Manage the data such as calculating new positions using extrapolation
         // and marking aircrafts as obsolete when they have not received updates in a while.
@@ -54,15 +63,15 @@ namespace ATCDataserver
 
             lock (AIR_PICTURE_LOCK)
             {
-                orderedAircrafts = airPicture.OrderBy(aircraft => aircraft.LastMessage).ToList();
+                orderedAircrafts = airPicture.OrderBy(aircraft => aircraft.LastMessageReceived).ToList();
             }
             foreach (var aircraft in orderedAircrafts)
             {
 
-                var latestAircraftMessageTime = aircraft.LastMessage;
+                var latestAircraftMessageTime = aircraft.LastMessageReceived;
                 var minutes = (DateTime.UtcNow - latestAircraftMessageTime).TotalMinutes;
 
-                if (minutes > REMOVE_OLD_AIRCRAFT_THRESHOLD)
+                if (minutes > REMOVE_OLD_AIRCRAFT_THRESHOLD || aircraft.EstimationsSinceLastActualPosition > MAX_ALLOWED_ESTIMATES)
                 {
                     lock (AIR_PICTURE_LOCK)
                     {
@@ -77,7 +86,7 @@ namespace ATCDataserver
 
 
                 if (lastKnownPosition != null &&
-                    (DateTime.UtcNow - lastKnownPosition.Generated).TotalMinutes > NEW_ESTIMATE_THRESHOLD &&
+                    (DateTime.UtcNow - lastKnownPosition.Generated).TotalSeconds > NEW_ESTIMATE_THRESHOLD_IN_SECONDS &&
                     aircraft.HasValidState())
                 {
                     aircraft.AddNewEstimatePosition();
@@ -94,13 +103,16 @@ namespace ATCDataserver
             {
                 changedAircrafts = airPicture.Where(aircraft => aircraft.HasChanged && aircraft.HasValidState()).ToList();
             }
+
+            var taskList = new List<Task>();
             foreach (var aircraft in changedAircrafts)
             {
-                client.InsertAircraftAsync(aircraft).Wait();
+                var task = client.InsertAircraftAsync(aircraft);
                 aircraft.HasChanged = false;                  
+                taskList.Add(task);
             }
+            Task.WaitAll(taskList.ToArray());
         }
-
 
         public static SBSMessageHelper DataParser(string message)
         {
@@ -118,7 +130,6 @@ namespace ATCDataserver
 
         }
 
-
         public static void HandleReceivedData(string receivedMessage)
         {
             if (receivedMessage == string.Empty)
@@ -128,9 +139,9 @@ namespace ATCDataserver
             var sbsMessage = DataParser(receivedMessage);
             ProcessMessage(_airPicture, sbsMessage);
         }
+
         private static void ProcessMessage(List<RecognizedAircraft> airPicture, SBSMessageHelper sbsMessage)
         {
-            // TODO think of better solution
             // Returns when messagetype is not whitelisted
             if (sbsMessage is null || sbsMessage.IgnoreMessage) return;
             if (!sbsMessage.FieldType.Equals(SBSMessageHelper.MSG)) return;
@@ -142,6 +153,7 @@ namespace ATCDataserver
                 return;
             }
 
+
             RecognizedAircraft? aircraft;
 
             lock (AIR_PICTURE_LOCK)
@@ -150,8 +162,6 @@ namespace ATCDataserver
 
                 if (aircraft == null)
                 {
-                    // no need to lock since aircraft will first receive and then added to the airpicture,
-                    // meaning it is not subject to being uploaded until added to airPicture list.
                     aircraft = new RecognizedAircraft(sbsMessage);
                     airPicture.Add(aircraft);
                     return; // after creating aircraft from a single message Aggregation is not needed.
@@ -179,7 +189,6 @@ namespace ATCDataserver
                             Longitude = sbsMessage.FieldLongitude,
                             Generated = sbsMessage.FieldDateMessageGenerated
                                 .ToDateTime(sbsMessage.FieldTimeMessageGenerated)
-                                .ToUniversalTime(),
                         };
 
                         aircraft.AddNewPosition(newPosition);
@@ -193,7 +202,7 @@ namespace ATCDataserver
                 default:
                     break;
             }
-
+            aircraft.LastMessageReceived = sbsMessage.FieldDateMessageGenerated.ToDateTime(sbsMessage.FieldTimeMessageGenerated);
             aircraft.HasChanged = true;
         }
     }
