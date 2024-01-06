@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Recognized Air Picture</title>
+    {{ head|safe }}
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+    <script>
+        // Function to update the map HTML every second
+        var iframes = [];
+        var currentFrameIndex = 0;
+        var autoRun = false;
+        function updateMap() {
+            $.ajax({
+                url: 'http://localhost:5000/calculate_new_map',
+                method: 'GET',
+                success: function (data) {
+                    // Create a new iframe element
+                    var iframe = document.createElement('iframe');
+                    // Append the iframe to the body
+                    document.body.appendChild(iframe);
+
+                    if (iframes.length != 0) {
+                        iframe.style.display = 'none'
+                    }
+
+                    // Set the size of the new iframe to match the window width and height
+                    iframe.style.width = window.innerWidth + 'px';
+                    iframe.style.height = window.innerHeight + 'px';
+
+                    // Get the document of the iframe
+                    var iframeDocument = iframe.contentDocument || iframe.contentWindow.document;
+
+                    // Write the HTML content into the iframe document
+                    iframeDocument.open();
+                    iframeDocument.write(data);
+                    iframeDocument.close();
+                    
+                    iframes.push(iframe);
+
+                    iframe.id = 'mapFrame' + iframes.length;
+                    
+                    console.log(data)
+                },
+                complete: function () {
+                    // Schedule the next update after 1 second
+                    setTimeout(updateMap(), 1000);
+                }
+            });
+        }
+
+        // Function to show a specific iframe based on index
+        function showIframe(index) {
+            if (index >= 0 && index < iframes.length) {
+                // Hide all iframes
+                iframes.forEach(function (iframe) {
+                    iframe.style.display = 'none';
+                });
+
+                // Show the selected iframe
+                iframes[index].style.display = 'block';
+            }
+        }
+
+        // Function to show the next iframe
+        function nextIframe() {
+            if (iframes.length > 1) {
+                iframes[currentFrameIndex].style.display = 'none';
+                currentFrameIndex = (currentFrameIndex + 1) % iframes.length;
+                iframes[currentFrameIndex].style.display = 'block';
+            }
+        }
+
+        // Function to show the previous iframe
+        function prevIframe() {
+            if (iframes.length > 1) {
+                iframes[currentFrameIndex].style.display = 'none';
+                currentFrameIndex = (currentFrameIndex - 1 + iframes.length) % iframes.length;
+                iframes[currentFrameIndex].style.display = 'block';
+            }
+        }
+
+        function setAutoMode() {
+            autoRun = !autoRun
+        }
+
+        function autoWalk() {
+            if (!autoRun) {
+                return;
+            }
+            if (currentFrameIndex < iframes.length - 1) {
+                nextIframe();
+            }
+
+        }
+
+        window.addEventListener('load', function () {
+
+            
+            var prevButton = document.createElement('button');
+            prevButton.textContent = '-1';
+            prevButton.addEventListener('click', prevIframe);
+            document.body.appendChild(prevButton);
+
+            // Add +1 and -1 buttons for navigation
+            var nextButton = document.createElement('button');
+            nextButton.textContent = '+1';
+            nextButton.addEventListener('click', nextIframe);
+            document.body.appendChild(nextButton);
+
+
+            var autoButton = document.createElement('button');
+            autoButton.textContent = 'auto';
+            autoButton.addEventListener('click', setAutoMode);
+            document.body.appendChild(autoButton);
+
+            setInterval(autoWalk, 1000)
+        });
+
+        // Initial call to start the updating process
+        updateMap()
+
+        
+    </script>
+</head>
+<body>
+    <h1>Recognized Air Picture</h1>
+    <div id="buttonContainer"></div>
+
+
+
+
+<frameset col="*">
+    <frame id="mapFrame" src=""></frame>
+</frameset>
+
+
+
+        
+</body>
+</html>
