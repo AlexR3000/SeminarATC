@@ -7,12 +7,18 @@ import os
 
 app = Flask(__name__)
 
+# Get the directory of the current script
+script_directory = os.path.dirname(os.path.abspath(__file__))
+
+# Construct paths to files in subdirectories
+static_folder = os.path.join(script_directory, 'static')
+html_file_path = os.path.join(script_directory, 'map.html')
 
 @app.route('/calculate_new_map')
 def calculate_new_map():
     os.system("python demo_map_creator.py")
 
-    with open("./static/map.html") as file:
+    with open(html_file_path) as file:
         return file.read()
 
 

@@ -14,7 +14,6 @@ namespace AircraftFetcherAWSLambda;
 
 public class Function
 {
-    
     /// <summary>
     /// A simple function that scans the RecognizedAirPicture table from dynamodb
     /// </summary>
@@ -28,6 +27,7 @@ public class Function
             {
                 ServiceURL = "http://192.168.0.43:8000"
             };
+
             var client = new AmazonDynamoDBClient(config);
 
             var table = Table.LoadTable(client, "RecognizedAirPicture");

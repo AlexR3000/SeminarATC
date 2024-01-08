@@ -2,20 +2,40 @@
 using Amazon.DynamoDBv2.DataModel;
 using Amazon.DynamoDBv2.Model;
 using Amazon.Runtime;
+using Amazon.Runtime.CredentialManagement;
 using System.Linq.Expressions;
 
 namespace DynamoDbSetup
 {
+    /// <summary>
+    /// Creates a table in dynamodb and sets an attribute "ExpireAt" to act as ttl
+    /// If table already exists it will delete it and recreate it
+    /// While used on local dynamodb instance running in docker it should also connect to an actual instance
+    /// </summary>
     public class Program
     {
         public static void Main()
         {
-            AmazonDynamoDBConfig clientConfig = new AmazonDynamoDBConfig();
-            clientConfig.ServiceURL = "http://127.0.0.1:8000";
 
-
-            AmazonDynamoDBClient client = new AmazonDynamoDBClient(clientConfig);
-
+            var profiles = new CredentialProfileStoreChain();
+            var requestedProfileName = "atc";
+            AmazonDynamoDBClient client;
+            AmazonDynamoDBConfig clientConfig = new AmazonDynamoDBConfig
+            {
+                ServiceURL = "http://127.0.0.1:8000"
+            };
+            if (!profiles.TryGetAWSCredentials(requestedProfileName, out var awsCredentials))
+            {
+                // profile does not exist
+                // in this case it will try to use the default and if it does not work
+                // it will try to take the instance profile service on EC2
+                client = new AmazonDynamoDBClient(clientConfig);
+            }
+            else
+            {
+                // profile exists
+                client = new AmazonDynamoDBClient(awsCredentials, clientConfig);
+            }
 
             try
             {

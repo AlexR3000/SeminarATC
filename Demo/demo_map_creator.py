@@ -4,25 +4,36 @@ import tempfile
 import requests
 import json
 import io
-
+import os
 # plane marker from <a target="_blank" href="https://icons8.com/icon/o21PmwHBoj5l/flugmodus-an">Flugmodus an</a> Icon von <a target="_blank" href="https://icons8.com">Icons8</a>
+
+
+
+# Get the directory of the current script
+script_directory = os.path.dirname(os.path.abspath(__file__))
+
+# Construct paths to files in subdirectories
+static_folder = os.path.join(script_directory, 'static')
+html_file_path = os.path.join(script_directory, 'map.html')
+
+
+# partly created with chatgpt
 def create_folium_map(latitude, longitude, zoom=12):
     # Create a Folium map centered at the specified latitude and longitude
     map_object = folium.Map(location=[latitude, longitude], zoom_start=zoom)
 
-
-
     # Save the map to an HTML file
-    map_object.save("./static/map.html")
+    map_object.save(html_file_path)
 
     return map_object
+
 
 def rotate_image(image_path, rotation_angle_degrees):
     # Open the image
     original_image = Image.open(image_path)
 
-    # Rotate the image
-    rotated_image = original_image.rotate(-(rotation_angle_degrees - 90), expand=True)
+    # Rotate the image, added the -(rotation_angle-degrees -90) to turn the right direction
+    rotated_image = original_image.rotate(-(rotation_angle_degrees - 90), expand=True) 
 
     # Save the rotated image to a BytesIO buffer
     rotated_image_buffer = io.BytesIO()
@@ -33,6 +44,7 @@ def rotate_image(image_path, rotation_angle_degrees):
     rotated_image.save(temp_file.name, format="PNG")
 
     return temp_file.name
+
 
 def draw_image_on_map(map_object, position, rotated_image_path, popup_text="Image Marker"):
 
@@ -49,7 +61,15 @@ def draw_image_on_map(map_object, position, rotated_image_path, popup_text="Imag
     ).add_to(map_object)
 
     # Save the map to an HTML file
-    map_object.save("./static/map.html")
+    map_object.save(html_file_path)
+
+
+def deserialize_air_picture(json_air_picture):
+    
+    air_picture = json.loads(json_air_picture)
+
+    return air_picture
+
 
 def get_air_picture():
     url = "http://localhost:3000/recognizedAirPicture/hso"
@@ -58,12 +78,6 @@ def get_air_picture():
     if response.status_code == 200:
         return response.text
     
-def deserialize_air_picture(json_air_picture):
-    # Step 1: Load the outer JSON array
-    air_picture = json.loads(json_air_picture)
-
-    return air_picture
-
 
 if __name__ == "__main__":
     

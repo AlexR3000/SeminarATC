@@ -34,7 +34,6 @@ namespace RecognizedAirPicture
             }
         }
 
-
         private List<int> _lastTracks { get; set; } = new List<int>();
         private int _track = -1;
         public int Track 
@@ -57,7 +56,6 @@ namespace RecognizedAirPicture
         public DateTime LastMessageReceived { get; set; }
 
         public bool HasChanged { get; set; }
-
 
         // When a first message is received a RecognizedAircraft object can be created from the first message
         public RecognizedAircraft(SBSMessageHelper sbsMessage) 
@@ -99,6 +97,7 @@ namespace RecognizedAirPicture
             }
         }
 
+
         public Position? GetLastPosition()
         {
             lock (_positions)
@@ -107,6 +106,7 @@ namespace RecognizedAirPicture
                 return lastPosition;
             }
         }
+
 
         public Position? GetOldestPosition()
         {
@@ -142,6 +142,7 @@ namespace RecognizedAirPicture
                 tolerance + 2*Math.Pow(EstimationsSinceLastActualPosition, 2);
         }
 
+
         public static double ApplyMedianFilter(ICollection<int> lastValues) 
         {
             if (lastValues.Count == 0) { return 0; }
@@ -161,6 +162,7 @@ namespace RecognizedAirPicture
             return median;
         }
 
+
         public static void AddNewValueToFixedSizeCollection<T>(T value, ICollection<T> valueCollection)
         {
             if (valueCollection == null) {  return; }
@@ -174,6 +176,7 @@ namespace RecognizedAirPicture
 
             values.Add(value);
         }
+
 
         public void AddNewEstimatePosition()
         {
@@ -204,6 +207,7 @@ namespace RecognizedAirPicture
 
             HasChanged = true;
         }
+
 
         public void AddNewPosition(Position position)
         {
@@ -257,7 +261,5 @@ namespace RecognizedAirPicture
                 IsEstimated = true,
             };
         }
-
-
     }
 }

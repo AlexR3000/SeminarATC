@@ -30,10 +30,6 @@ namespace RecognizedAirPicture
         public int FieldTransmissionType { get; set; } = 0;
 
 
-
-
-
-
         // identification based
         public string FieldSessionID { get; set; } = string.Empty;
         // some database id that appears to be unused by hsog base station
@@ -115,10 +111,8 @@ namespace RecognizedAirPicture
                 NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out int track))
             {
                 FieldTrack = track;
-            }
-            
+            }   
         }
-
     }
 
     // Values correspond to the fields mentioned here http://woodair.net/sbs/article/barebones42_socket_data.htm, but starting from 0

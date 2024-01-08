@@ -26,7 +26,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AircraftFetcherAWSLambda", 
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{706C5D7C-CAE5-418E-A154-F6801BABA289}"
 	ProjectSection(SolutionItems) = preProject
-		swagger.yaml = swagger.yaml
 		template.yaml = template.yaml
 	EndProjectSection
 EndProject

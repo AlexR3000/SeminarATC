@@ -7,7 +7,6 @@ using System.Threading.Tasks;
 namespace RecognizedAirPicture
 {
     public class Position
-
     {
         public double Longitude {  get; set; }
         public double Latitude { get; set; }

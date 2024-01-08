@@ -100,7 +100,6 @@ namespace ATCDataserver
 
             for (int i = 0; i < splitMessage.Length - 1; i++)
             {
-                // Console.WriteLine($"Received from server: {splitMessage[i]}");
                 OnDataReceived(splitMessage[i]);
             }   
         }

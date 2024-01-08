@@ -9,6 +9,10 @@ using System.Security.Authentication;
 
 namespace ATCDataserver
 {
+    /// <summary>
+    /// Runs the aggregation, extrapolation and outlier removal.
+    /// Will upload the aircrafts to dynamodb
+    /// </summary>
     public class DataServerMain
     {
         private static readonly int NEW_ESTIMATE_THRESHOLD_IN_SECONDS = 5; // in seconds
@@ -22,28 +26,38 @@ namespace ATCDataserver
 
         private static List<RecognizedAircraft> _airPicture = new List<RecognizedAircraft>();
 
+        private static readonly string SERVICE_IP = "141.79.10.172";
+        private static readonly int SERVICE_PORT = 30003;
+
+        private static readonly string SERVICE_PROFILE = "atc";
+
         public static void Main()
         {            
-            var receiver = new DataReceiver("141.79.10.172", 30003);
+            var receiver = new DataReceiver(SERVICE_IP, SERVICE_PORT);
             receiver.DataReceived += HandleReceivedData;
             
             var dataStreamTask = Task.Run(() => receiver.StreamReceive());
 
 
             var profiles = new CredentialProfileStoreChain();
-            var requestedProfileName = "atc";
-            if (!profiles.TryGetAWSCredentials(requestedProfileName, out var awsCredentials))
-            {
-                throw new InvalidCredentialException($"Profile \"{requestedProfileName}\" does not exist");
-            }
-
+            var requestedProfileName = SERVICE_PROFILE;
+            AmazonDynamoDBClient awsClient;
             AmazonDynamoDBConfig clientConfig = new AmazonDynamoDBConfig
             {
                 ServiceURL = "http://127.0.0.1:8000"
             };
-
-            var awsClient = new AmazonDynamoDBClient(awsCredentials, clientConfig);
-
+            if (!profiles.TryGetAWSCredentials(requestedProfileName, out var awsCredentials))
+            {
+                // profile does not exist
+                // in this case it will try to use the default and if it does not work
+                // it will try to take the instance profile service on EC2
+                awsClient = new AmazonDynamoDBClient(clientConfig);
+            }
+            else
+            {
+                // profile exists
+                awsClient = new AmazonDynamoDBClient(awsCredentials, clientConfig);
+            }
             var client = new DynamoClientRAP(awsClient);
 
             while (true) 
@@ -53,10 +67,8 @@ namespace ATCDataserver
             }
         }
 
-
         // Manage the data such as calculating new positions using extrapolation
         // and marking aircrafts as obsolete when they have not received updates in a while.
-
         public static void ManageDataIteration(List<RecognizedAircraft> airPicture)
         {
             List<RecognizedAircraft> orderedAircrafts;
