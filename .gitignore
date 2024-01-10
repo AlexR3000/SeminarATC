@@ -3,11 +3,6 @@
 ##
 ## Get latest from https://github.com/github/gitignore/blob/master/VisualStudio.gitignore
 
-# Docker
-ATCDataserver\DynamoDebugSetUp\docker\
-
-# Demo map
-Demo\static\
 
 # User-specific files
 *.rsuser
@@ -367,3 +362,5 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+/Demo/static/map.html
+/ATCDataserver/DynamoDebugSetUp/docker/dynamodb/shared-local-instance.db
