@@ -20,7 +20,7 @@ map_creator_path = os.path.join(script_directory, 'demo_map_creator.py')
 def calculate_new_map():
     os.system("python " + map_creator_path)
 
-    with open(html_file_path) as file:
+    with open(html_file_path, 'w') as file:
         return file.read()
 
 
