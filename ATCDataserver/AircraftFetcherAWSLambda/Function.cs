@@ -25,7 +25,7 @@ public class Function
         {
             var config = new AmazonDynamoDBConfig
             {
-                ServiceURL = "http://192.168.0.43:8000"
+                ServiceURL = "http://127.0.0.1:8000"
             };
 
             var client = new AmazonDynamoDBClient(config);
