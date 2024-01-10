@@ -14,7 +14,7 @@ script_directory = os.path.dirname(os.path.abspath(__file__))
 
 # Construct paths to files in subdirectories
 static_folder = os.path.join(script_directory, 'static')
-html_file_path = os.path.join(script_directory, 'map.html')
+html_file_path = os.path.join(static_folder, 'map.html')
 
 plane_image = os.path.join(script_directory, 'icons8-flugmodus-an-64.png')
 
@@ -32,7 +32,7 @@ def create_folium_map(latitude, longitude, zoom=12):
 
 def rotate_image(image_path, rotation_angle_degrees):
     # Open the image
-    original_image = Image.open(plane_image)
+    original_image = Image.open(image_path)
 
     # Rotate the image, added the -(rotation_angle-degrees -90) to turn the right direction
     rotated_image = original_image.rotate(-(rotation_angle_degrees - 90), expand=True) 
@@ -94,7 +94,7 @@ if __name__ == "__main__":
     for e in result:
         count = count + 1
         position = [float(e["Latitude"].replace(",", ".")), float(e["Longitude"].replace(",", "."))]
-        rotated_image = rotate_image(r".\icons8-flugmodus-an-64.png", e["Track"])
+        rotated_image = rotate_image(plane_image, e["Track"])
         draw_image_on_map(map_object=map, position=position, rotated_image_path=rotated_image, popup_text=e)
     print("Counted aircraft: ", count)
     
