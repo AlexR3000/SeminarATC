@@ -364,3 +364,4 @@ MigrationBackup/
 FodyWeavers.xsd
 /Demo/static/map.html
 /ATCDataserver/DynamoDebugSetUp/docker/dynamodb/shared-local-instance.db
+/ATCDataserver/.aws-sam/
