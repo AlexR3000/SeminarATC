@@ -12,7 +12,7 @@ script_directory = os.path.dirname(os.path.abspath(__file__))
 
 # Construct paths to files in subdirectories
 static_folder = os.path.join(script_directory, 'static')
-html_file_path = os.path.join(script_directory, 'map.html')
+html_file_path = os.path.join(static_folder, 'map.html')
 
 map_creator_path = os.path.join(script_directory, 'demo_map_creator.py')
 
