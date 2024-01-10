@@ -3,6 +3,13 @@ Transform: AWS::Serverless-2016-10-31
 Resources:
   AircraftFetcher:
     Type: AWS::Serverless::Function
+    Connectors:
+      DynamoConn:
+        Properties:
+          Destination:
+            Id: DynamoDBRecognizedAirPicture
+          Permissions:
+          - Read
     Properties:
       Handler: AircraftFetcherAWSLambda::AircraftFetcherAWSLambda.Function::FunctionHandler
       Runtime: dotnet6
@@ -14,7 +21,7 @@ Resources:
           AWS_PROFILE: local
       Events:
         MyApi:
-          Type: Api
+          Type: HttpApi
           Properties:
             Path: /recognizedAirPicture/hso
             Method: get

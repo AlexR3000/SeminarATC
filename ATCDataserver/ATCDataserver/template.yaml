@@ -11,7 +11,6 @@ Resources:
             Id: DynamoDBRecognizedAirPicture
           Permissions:
             - Read
-            - Write
     Properties:
       Handler: AircraftFetcherAWSLambda::AircraftFetcherAWSLambda.Function::FunctionHandler
       Runtime: dotnet6
