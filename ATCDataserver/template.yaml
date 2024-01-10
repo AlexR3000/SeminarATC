@@ -17,9 +17,6 @@ Resources:
       CodeUri: .\AircraftFetcherAWSLambda
       MemorySize: 256
       Timeout: 10
-      Environment:
-        Variables:
-          AWS_PROFILE: local
       Events:
         MyApi:
           Type: HttpApi
