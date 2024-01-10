@@ -16,6 +16,8 @@ script_directory = os.path.dirname(os.path.abspath(__file__))
 static_folder = os.path.join(script_directory, 'static')
 html_file_path = os.path.join(script_directory, 'map.html')
 
+plane_image = os.path.join(script_directory, 'icons8-flugmodus-an-64.png')
+
 
 # partly created with chatgpt
 def create_folium_map(latitude, longitude, zoom=12):
@@ -30,7 +32,7 @@ def create_folium_map(latitude, longitude, zoom=12):
 
 def rotate_image(image_path, rotation_angle_degrees):
     # Open the image
-    original_image = Image.open(image_path)
+    original_image = Image.open(plane_image)
 
     # Rotate the image, added the -(rotation_angle-degrees -90) to turn the right direction
     rotated_image = original_image.rotate(-(rotation_angle_degrees - 90), expand=True) 
