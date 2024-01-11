@@ -17,7 +17,7 @@ Implements a dataserver providing a current air picture.
 
 ## API Documentation
 
-The Api for the project is simple. It exists of one endpoint which responses includes all currently observed aircraft that are currently in a valid state.
+The Api for the project is simple. It exists of one endpoint, which responses includes all currently observed aircraft that are currently in a valid state.
 
 ### Endpoints
 
@@ -75,7 +75,7 @@ The Api for the project is simple. It exists of one endpoint which responses inc
 ## Demo API
 
 Included in this repository is a demo. The demo is build with Python and is implementing a flask server. The demo displays a folium map with markers representing the aircrafts.
-The demo provides to APIs. One continuously updates the displayed map by creating a new Iframe and loading the new map inside of it, the other creates said single map.
+The demo provides two API endpoints. One continuously updates the displayed map by creating a new Iframe and is loading the new map inside of it, the other creates said single map.
 
 - **Endpoint 1**
   - Method: GET
@@ -119,17 +119,17 @@ For more information refer to the [imports for the demo](#Demo-imports)
   ### Create Aws profile atc
   The following command will create an aws profile for your aws cli.
   Run ```aws configure --profile atc``` 
-  For running the project locally actual credentials do not need to be provided.
+  For running the project locally, actual credentials do not need to be provided.
 
   ### Starting and initializing DynamoDB
-  To start a DynamoDB Docker container you can use the [docker-compose.yml](ATCDataserver/DynamoDebugSetUp/docker-compose.yml) file in the [DynamoDebugSetUp project](ATCDataserver/DynamoDebugSetUp).
-  After that running the [DynamoDebugSetUp project](ATCDataserver/DynamoDebugSetUp)will create a table RecognizedAirPicture for the DynamoDB
+  To start a DynamoDB Docker container, you can use the [docker-compose.yml](ATCDataserver/DynamoDebugSetUp/docker-compose.yml) file in the [DynamoDebugSetUp project](ATCDataserver/DynamoDebugSetUp).
+  After that, running the [DynamoDebugSetUp project](ATCDataserver/DynamoDebugSetUp)will create a table RecognizedAirPicture for the DynamoDB
   ### Build a Serverless Application Model
-  Navigate to [ATCDataserver](ATCDataserver) in a terminal. Where the [template.yaml](ATCDataserver/template.yaml) file is located.
+  Navigate to [ATCDataserver](ATCDataserver) in a terminal. There the [template.yaml](ATCDataserver/template.yaml) file is located.
   Run the following command ```sam build```.
   This will create a build in the directory .aws-sam
   ### Start local API
-  Run the command ```sam local start-api --docker-network host``` from the same [directory](ATCDataserver) as earlier. The command will run the lambda function locally which can then be invoked with the url /recognizedAirPicture/hso
+  Run the command ```sam local start-api --docker-network host``` from the same [directory](ATCDataserver) as earlier. The command will run the lambda function locally, which can then be invoked with the url /recognizedAirPicture/hso
   as described in [Api Documentation](#API-Documentation) in a docker container at port 3000. The `--docker-network host` option allows the container to share the same network as the host.
   This allows for the debug service url in the [template.yaml](ATCDataserver/template.yaml) to work with the loopback address while running in a container. 
   ### Starting the ATCDataserver
