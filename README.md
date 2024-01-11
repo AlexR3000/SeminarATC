@@ -96,8 +96,8 @@ The demo provides to APIs. One continuously updates the displayed map by creatin
 
 ### Prerequisites
   - Docker
-  - Aws SAM cli
-  - Aws profile named "atc" with us-west-2 as selected region and arbitrary random access-keys
+  - AWS SAM cli
+  - AWS profile named "atc" with us-west-2 as selected region and arbitrary random access-keys
   - Access to the internal network of the HSO with the correct permissions
   - Several python libraries
     - folium
@@ -118,12 +118,12 @@ The demo provides to APIs. One continuously updates the displayed map by creatin
 ### Installation
   ### Create Aws profile atc
   The following command will create an aws profile for your aws cli.
-  Run `aws configure --profile atc` 
+  Run ```aws configure --profile atc``` 
   For running the project locally actual credentials do not need to be provided.
 
   ### Starting and initializing DynamoDB
-  To start a DynamoDB docker container you can use the docker-compose file in the DynamoDebugSetUp project.
-  After that running the DynamoDebugSetUp will create a table RecognizedAirPicture for the DynamoDB
+  To start a DynamoDB Docker container you can use the [docker-compose](ATCDataserver/DynamoDebugSetUp/docker-compose.yaml) file in the [DynamoDebugSetUp project](ATCDataserver/DynamoDebugSetUp).
+  After that running the [DynamoDebugSetUp project](ATCDataserver/DynamoDebugSetUp)will create a table RecognizedAirPicture for the DynamoDB
   ### Build a Serverless Application Model
   Navigate to [ATCDataserver](ATCDataserver) in a terminal. There should be a [template.yaml](ATCDataserver/template.yaml) file.
   Run `sam build`.
