@@ -1,6 +1,7 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 
+
 Resources:
   AircraftFetcher:
     Type: AWS::Serverless::Function
@@ -10,11 +11,11 @@ Resources:
           Destination:
             Id: DynamoDBRecognizedAirPicture
           Permissions:
-            - Read
+            - Read 
     Properties:
       Handler: AircraftFetcherAWSLambda::AircraftFetcherAWSLambda.Function::FunctionHandler
       Runtime: dotnet6
-      CodeUri: .\AircraftFetcherAWSLambda
+      CodeUri: AircraftFetcherAWSLambda
       MemorySize: 256
       Timeout: 10
       Events:
@@ -23,8 +24,10 @@ Resources:
           Properties:
             Path: /recognizedAirPicture/hso
             Method: get
-
-
+      # Remove before deploying
+      Environment:
+        Variables:
+          DYNAMODB_ENDPOINT_DEBUG: "http://192.168.0.43:8000"
 
   DynamoDBRecognizedAirPicture:
     Type: AWS::DynamoDB::Table

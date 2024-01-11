@@ -16,15 +16,15 @@ Resources:
       CodeUri: AircraftFetcher
       MemorySize: 256
       Timeout: 10
-      Environment:
-        Variables:
-          AWS_PROFILE: local
       Events:
         MyApi:
           Type: HttpApi
           Properties:
             Path: /recognizedAirPicture/hso
             Method: get
+      Environment:
+        Variables:
+          DYNAMODB_ENDPOINT_DEBUG: http://192.168.0.43:8000
     Metadata:
       SamResourceId: AircraftFetcher
   DynamoDBRecognizedAirPicture:

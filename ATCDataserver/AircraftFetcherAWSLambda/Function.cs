@@ -14,6 +14,7 @@ namespace AircraftFetcherAWSLambda;
 
 public class Function
 {
+    private static readonly string? _dynamoDbEndpoint = Environment.GetEnvironmentVariable("DYNAMODB_ENDPOINT_DEBUG");
     /// <summary>
     /// A simple function that scans the RecognizedAirPicture table from dynamodb
     /// </summary>
@@ -23,18 +24,26 @@ public class Function
     {
         try
         {
-            var config = new AmazonDynamoDBConfig
+            AmazonDynamoDBClient client;
+            if (_dynamoDbEndpoint is not null)
             {
-                ServiceURL = "http://127.0.0.1:8000"
-            };
-
-            var client = new AmazonDynamoDBClient(config);
-
+                var config = new AmazonDynamoDBConfig
+                {
+                    ServiceURL = _dynamoDbEndpoint
+                };
+                client = new AmazonDynamoDBClient(config);
+            }
+            else
+            {
+                client = new AmazonDynamoDBClient();
+            }
             var table = Table.LoadTable(client, "RecognizedAirPicture");
 
             var search = table.Scan(new ScanFilter());
 
             var items = search.GetRemainingAsync().Result;
+
+            
 
 
             var jsonOptions = new JsonSerializerOptions
@@ -60,7 +69,6 @@ public class Function
                     Latitude = latitude.AsString(),
                     Longitude = longitude.AsString(),
                     PositionCreated = positionCreated.AsString(),
-                    ExpireAt = expiration.AsString(),
                     Track = track.AsInt(),
                     Callsign = callsign.AsString()
 
