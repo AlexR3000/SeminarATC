@@ -122,7 +122,7 @@ The demo provides to APIs. One continuously updates the displayed map by creatin
   For running the project locally actual credentials do not need to be provided.
 
   ### Starting and initializing DynamoDB
-  To start a DynamoDB Docker container you can use the [docker-compose](ATCDataserver/DynamoDebugSetUp/docker-compose.yaml) file in the [DynamoDebugSetUp project](ATCDataserver/DynamoDebugSetUp).
+  To start a DynamoDB Docker container you can use the [docker-compose](ATCDataserver/DynamoDebugSetUp/docker-compose.yml) file in the [DynamoDebugSetUp project](ATCDataserver/DynamoDebugSetUp).
   After that running the [DynamoDebugSetUp project](ATCDataserver/DynamoDebugSetUp)will create a table RecognizedAirPicture for the DynamoDB
   ### Build a Serverless Application Model
   Navigate to [ATCDataserver](ATCDataserver) in a terminal. There should be a [template.yaml](ATCDataserver/template.yaml) file.
