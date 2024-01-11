@@ -122,21 +122,23 @@ For more information refer to the [imports for the demo](#Demo-imports)
   For running the project locally actual credentials do not need to be provided.
 
   ### Starting and initializing DynamoDB
-  To start a DynamoDB Docker container you can use the [docker-compose](ATCDataserver/DynamoDebugSetUp/docker-compose.yml) file in the [DynamoDebugSetUp project](ATCDataserver/DynamoDebugSetUp).
+  To start a DynamoDB Docker container you can use the [docker-compose.yml](ATCDataserver/DynamoDebugSetUp/docker-compose.yml) file in the [DynamoDebugSetUp project](ATCDataserver/DynamoDebugSetUp).
   After that running the [DynamoDebugSetUp project](ATCDataserver/DynamoDebugSetUp)will create a table RecognizedAirPicture for the DynamoDB
   ### Build a Serverless Application Model
   Navigate to [ATCDataserver](ATCDataserver) in a terminal. Where the [template.yaml](ATCDataserver/template.yaml) file is located.
-  Run the following command `sam build`.
+  Run the following command ```sam build```.
   This will create a build in the directory .aws-sam
   ### Start local API
-  Run the command `sam local start-api --docker-network host` from the same [directory](ATCDataserver) as earlier. The command will run the lambda function locally which can then be invoked with the url /recognizedAirPicture/hso
-  as described in [Api Documentation](#API-Documentation) in a docker container on port 3000. The `--docker-network host` option allows the container to share the same network as the host.
+  Run the command ```sam local start-api --docker-network host``` from the same [directory](ATCDataserver) as earlier. The command will run the lambda function locally which can then be invoked with the url /recognizedAirPicture/hso
+  as described in [Api Documentation](#API-Documentation) in a docker container at port 3000. The `--docker-network host` option allows the container to share the same network as the host.
   This allows for the debug service url in the [template.yaml](ATCDataserver/template.yaml) to work with the loopback address while running in a container. 
   ### Starting the ATCDataserver
   Connect to the internal network of HSO.
   Run the project [ATCDataserver](ATCDataserver/ATCDataserver).
   ### Starting the demo
-  To start the demo now simply start [python_demo.py](Demo/python_demo.py). The demo will run on the localhost on port 5000. The endpoint `/calculate_new_map`, when accessed with a browser, will display the current air picture. Using the endpoint `/map`        instead will continuously call `/calculate_new_map` and update the map on display every few seconds. 
+  To start the demo, simply run [python_demo.py](Demo/python_demo.py). The demo will run on the localhost at port 5000.
+  The endpoint `/calculate_new_map`, when accessed with a browser, will display the current air picture. Using the endpoint `/map` instead will continuously call `/calculate_new_map` and update the map on display every few seconds.
+  For continuous updates on the map use the endpoint `/map`
 
 
 
