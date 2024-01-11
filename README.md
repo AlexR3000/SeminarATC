@@ -5,10 +5,10 @@ Implements a dataserver providing a current air picture.
 
 ## Table of Contents
 
-- [Introduction](#introduction)
+- [Introduction](#atc-dataserver)
 - [API Documentation](#api-documentation)
   - [Endpoints](#endpoints)
-- [Demo API](#Demo-API)
+- [Demo API](#demo-api)
 - [Getting Started](#getting-started)
   - [Prerequisites](#prerequisites)
   - [Installation](#installation)
@@ -126,7 +126,7 @@ For more information refer to the [imports for the demo](#Demo-imports)
   After that, running the [DynamoDebugSetUp project](ATCDataserver/DynamoDebugSetUp)will create a table RecognizedAirPicture for the DynamoDB
   ### Build a Serverless Application Model
   Navigate to [ATCDataserver](ATCDataserver) in a terminal. There the [template.yaml](ATCDataserver/template.yaml) file is located. Change the environment variable DYNAMODB_ENDPOINT_DEBUG to match your ip address. 
-  Important note: Using the loopback address 127.0.0.1 or localhost will most likely not work
+  > **Important Note:** Using the loopback address 127.0.0.1 or localhost will most likely not work
   ```
     Environment:
       Variables:
