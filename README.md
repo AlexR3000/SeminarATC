@@ -17,7 +17,7 @@ Implements a dataserver providing a current air picture.
 
 ## API Documentation
 
-The API for the project is simple. It exists of one endpoint, which responses includes all currently observed aircraft that are currently in a valid state.
+The API for the project is simple, consisting of a single endpoint. Its responses include all currently observed aircraft that are in a valid state.
 
 ### Endpoints
 
@@ -74,8 +74,8 @@ The API for the project is simple. It exists of one endpoint, which responses in
 
 ## Demo API
 
-Included in this repository is a demo. The demo is build with Python and is implementing a flask server. The demo displays a folium map with markers representing the aircrafts.
-The demo provides two API endpoints. One continuously updates the displayed map by creating a new Iframe and is loading the new map inside of it, the other creates said single map.
+Included in this repository is a demo built with Python that implements a flask server. The demo displays a folium map with markers representing the aircrafts.
+The demo provides two API endpoints. One continuously updates the displayed map by creating a new Iframe and loading the new map inside it, while the other creates the single map.
 
 - **Endpoint 1**
   - Method: GET
@@ -92,12 +92,11 @@ The demo provides two API endpoints. One continuously updates the displayed map 
       A map.html which contains the folium map. Is requested and loaded in an Iframe when opening index.html
 
 ## Getting Started
-  Manual for using the application locally.
+  Manual for running the application locally.
 
 ### Prerequisites
   - Docker
   - AWS SAM cli
-  - AWS profile named "atc" with us-west-2 as selected region and arbitrary random access-keys
   - Access to the internal network of the HSO with the correct permissions
   - Several python libraries
     - folium
@@ -116,7 +115,7 @@ For more information refer to the [imports for the demo](#Demo-imports)
     import os
 
 ### Installation
-  ### Create Aws profile atc
+  ### Create AWS profile atc
   The following command will create an aws profile for your aws cli.
   Run ```aws configure --profile atc``` 
   For running the project locally, actual credentials do not need to be provided.
@@ -136,7 +135,7 @@ For more information refer to the [imports for the demo](#Demo-imports)
   This will create a build in the directory .aws-sam
   ### Start local API
   Run the command ```sam local start-api``` from the same [directory](ATCDataserver) as earlier. The command will run the lambda function locally, which can then be invoked with the url /recognizedAirPicture/hso
-  as described in [Api Documentation](#API-Documentation) in a docker container at port 3000. Each invokation will trigger the creation of a new Docker container running the actual lambda function.
+  as specified in the [Api Documentation](#API-Documentation). The invocation occurs in a Docker container at port 3000. Each invocation triggers the creation of a new Docker container running the actual lambda function, which will be terminated afterwards.
   ### Starting the ATCDataserver
   Connect to the internal network of HSO.
   Run the project [ATCDataserver](ATCDataserver/ATCDataserver).
