@@ -125,13 +125,18 @@ For more information refer to the [imports for the demo](#Demo-imports)
   To start a DynamoDB Docker container, you can use the [docker-compose.yml](ATCDataserver/DynamoDebugSetUp/docker-compose.yml) file in the [DynamoDebugSetUp project](ATCDataserver/DynamoDebugSetUp).
   After that, running the [DynamoDebugSetUp project](ATCDataserver/DynamoDebugSetUp)will create a table RecognizedAirPicture for the DynamoDB
   ### Build a Serverless Application Model
-  Navigate to [ATCDataserver](ATCDataserver) in a terminal. There the [template.yaml](ATCDataserver/template.yaml) file is located.
+  Navigate to [ATCDataserver](ATCDataserver) in a terminal. There the [template.yaml](ATCDataserver/template.yaml) file is located. Change the environment variable DYNAMODB_ENDPOINT_DEBUG to match your ip address. 
+  Important note: Using the loopback address 127.0.0.1 or localhost will most likely not work
+  ```
+    Environment:
+      Variables:
+        DYNAMODB_ENDPOINT_DEBUG "http://<your_ip>:8000"
+  ```
   Run the following command ```sam build```.
   This will create a build in the directory .aws-sam
   ### Start local API
-  Run the command ```sam local start-api --docker-network host``` from the same [directory](ATCDataserver) as earlier. The command will run the lambda function locally, which can then be invoked with the url /recognizedAirPicture/hso
-  as described in [Api Documentation](#API-Documentation) in a docker container at port 3000. The `--docker-network host` option allows the container to share the same network as the host.
-  This allows for the debug service url in the [template.yaml](ATCDataserver/template.yaml) to work with the loopback address while running in a container. 
+  Run the command ```sam local start-api``` from the same [directory](ATCDataserver) as earlier. The command will run the lambda function locally, which can then be invoked with the url /recognizedAirPicture/hso
+  as described in [Api Documentation](#API-Documentation) in a docker container at port 3000. Each invokation will trigger the creation of a new Docker container running the actual lambda function.
   ### Starting the ATCDataserver
   Connect to the internal network of HSO.
   Run the project [ATCDataserver](ATCDataserver/ATCDataserver).
