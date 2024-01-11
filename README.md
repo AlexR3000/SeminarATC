@@ -8,15 +8,11 @@ Implements a dataserver providing a current air picture.
 - [Introduction](#introduction)
 - [API Documentation](#api-documentation)
   - [Endpoints](#endpoints)
-  - [Authentication](#authentication)
-  - [Request and Response Format](#request-and-response-format)
+- [Demo API](#Demo-API)
 - [Getting Started](#getting-started)
   - [Prerequisites](#prerequisites)
   - [Installation](#installation)
-- [Usage Examples](#usage-examples)
-- [Testing](#testing)
-- [Contributing](#contributing)
-- [License](#license)
+
 
 
 ## API Documentation
@@ -76,7 +72,7 @@ The Api for the project is simple. It exists of one endpoint which responses inc
       ]
       ```
 
-## Demo
+## Demo API
 
 Included in this repository is a demo. The demo is build with Python and is implementing a flask server. The demo displays a folium map with markers representing the aircrafts.
 The demo provides to APIs. One continuously updates the displayed map by creating a new Iframe and loading the new map inside of it, the other creates said single map.
@@ -120,39 +116,27 @@ The demo provides to APIs. One continuously updates the displayed map by creatin
     import os
 
 ### Installation
-  - Create Aws profile atc
-    The following command will create an aws profile for your aws cli.
-    Run `aws configure --profile atc` 
-    For running the project locally actual credentials do not need to be provided.
+  ### Create Aws profile atc
+  The following command will create an aws profile for your aws cli.
+  Run `aws configure --profile atc` 
+  For running the project locally actual credentials do not need to be provided.
 
-  - Starting and initializing DynamoDB
-    To start a DynamoDB docker container you can use the docker-compose file in the DynamoDebugSetUp project.
-    After that running the DynamoDebugSetUp will create a table RecognizedAirPicture for the DynamoDB
-  - Build a Serverless Application Model
-    Navigate to [ATCDataserver](ATCDataserver) in a terminal. There should be a [template.yaml](ATCDataserver/template.yaml) file.
-    Run `sam build`.
-    This will create a build in the directory .aws-sam
-  - Start local API
-    Running the command `sam local start-api --docker-network host` from the same [directory](ATCDataserver) as earlier will run the lambda function locally which can be invoked with the url /recognizedAirPicture/hso
-    as described in [Api Documentation](#API-Documentation) in a docker container on port 3000. The `--docker-network host` option means that the docker container will share the same network as the host
-    which allows for the debug service url in the [template.yaml](ATCDataserver/template.yaml) to work with the loopback address. 
-  - Starting the ATCDataserver
-    Connect to the internal network of HSO.
-    Run the project [ATCDataserver](ATCDataserver/ATCDataserver).
-  - Starting the demo
+  ### Starting and initializing DynamoDB
+  To start a DynamoDB docker container you can use the docker-compose file in the DynamoDebugSetUp project.
+  After that running the DynamoDebugSetUp will create a table RecognizedAirPicture for the DynamoDB
+  ### Build a Serverless Application Model
+  Navigate to [ATCDataserver](ATCDataserver) in a terminal. There should be a [template.yaml](ATCDataserver/template.yaml) file.
+  Run `sam build`.
+  This will create a build in the directory .aws-sam
+  ### Start local API
+  Running the command `sam local start-api --docker-network host` from the same [directory](ATCDataserver) as earlier will run the lambda function locally which can be invoked with the url /recognizedAirPicture/hso
+  as described in [Api Documentation](#API-Documentation) in a docker container on port 3000. The `--docker-network host` option means that the docker container will share the same network as the host
+  which allows for the debug service url in the [template.yaml](ATCDataserver/template.yaml) to work with the loopback address. 
+  ### Starting the ATCDataserver
+  Connect to the internal network of HSO.
+  Run the project [ATCDataserver](ATCDataserver/ATCDataserver).
+  ### Starting the demo
+  To start the demo now simply start [python_demo.py](Demo/python_demo.py)
 
-## Usage Examples
 
-Provide examples of how to use your API with code snippets or curl commands.
 
-## Testing
-
-Explain how to run tests and ensure the proper functioning of your API.
-
-## Contributing
-
-Guidelines for contributing to the project. Include information on how others can report issues or submit pull requests.
-
-## License
-
-Specify the license under which your project is distributed.
