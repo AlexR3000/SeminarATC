@@ -17,7 +17,7 @@ Implements a dataserver providing a current air picture.
 
 ## API Documentation
 
-The Api for the project is simple. It exists of one endpoint, which responses includes all currently observed aircraft that are currently in a valid state.
+The API for the project is simple. It exists of one endpoint, which responses includes all currently observed aircraft that are currently in a valid state.
 
 ### Endpoints
 
