@@ -24,7 +24,7 @@ Resources:
             Method: get
       Environment:
         Variables:
-          DYNAMODB_ENDPOINT_DEBUG: http://192.168.0.43:8000
+          DYNAMODB_ENDPOINT_DEBUG: http://127.0.0.1:8000
     Metadata:
       SamResourceId: AircraftFetcher
   DynamoDBRecognizedAirPicture:
