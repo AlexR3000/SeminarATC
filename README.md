@@ -119,7 +119,7 @@ For more information refer to the [imports for the demo](#Demo-imports)
   The following command will create an aws profile for your aws cli.
   Run ```aws configure --profile atc``` 
   For running the project locally, actual credentials do not need to be provided.
-  If the atc profile is not there, the application will try to use the default profile. In case that is unsuccessful it will try to load the profile from the Instance Profile service on an EC2 instance.
+  If the atc profile is not available, the application will try to load the default profile. In case that is unsuccessful it will try to load the profile from the Instance Profile service on an EC2 instance.
 
   ### Starting and initializing DynamoDB
   To start a DynamoDB Docker container, you can use the [docker-compose.yml](ATCDataserver/DynamoDebugSetUp/docker-compose.yml) file in the [DynamoDebugSetUp project](ATCDataserver/DynamoDebugSetUp).
