@@ -5,8 +5,9 @@ import requests
 import json
 import io
 import os
-# plane marker from <a target="_blank" href="https://icons8.com/icon/o21PmwHBoj5l/flugmodus-an">Flugmodus an</a> Icon von <a target="_blank" href="https://icons8.com">Icons8</a>
 
+# Partly created with chatgpt
+# plane marker from "https://icons8.com/icon/o21PmwHBoj5l/flugmodus-an" Flugmodus an
 
 
 # Get the directory of the current script
@@ -19,7 +20,6 @@ html_file_path = os.path.join(static_folder, 'map.html')
 plane_image = os.path.join(script_directory, 'icons8-flugmodus-an-64.png')
 
 
-# partly created with chatgpt
 def create_folium_map(latitude, longitude, zoom=12):
     # Create a Folium map centered at the specified latitude and longitude
     map_object = folium.Map(location=[latitude, longitude], zoom_start=zoom)

@@ -1,5 +1,3 @@
-
-
 from flask import Flask, render_template
 import os
 
@@ -20,13 +18,11 @@ def calculate_new_map():
         return file.read()
 
 
-
 @app.route('/map')
 def show_map():
     return render_template('index.html')
 
     
-
 if __name__ == "__main__":
     app.run(debug=True)
 
