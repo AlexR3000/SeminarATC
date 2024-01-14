@@ -15,6 +15,7 @@ script_directory = os.path.dirname(os.path.abspath(__file__))
 
 # Construct paths to files in subdirectories
 static_folder = os.path.join(script_directory, 'static')
+os.makedirs(static_folder, exist_ok=True)
 html_file_path = os.path.join(static_folder, 'map.html')
 
 plane_image = os.path.join(script_directory, 'icons8-flugmodus-an-64.png')

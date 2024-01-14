@@ -13,7 +13,7 @@ map_creator_path = os.path.join(script_directory, 'demo_map_creator.py')
 @app.route('/calculate_new_map')
 def calculate_new_map():
     os.system("python " + map_creator_path)
-
+    os.makedirs(static_folder, exist_ok=True)
     with open(html_file_path, 'r+') as file:
         return file.read()
 
