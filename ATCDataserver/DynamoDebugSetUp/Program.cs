@@ -1,9 +1,6 @@
 ﻿using Amazon.DynamoDBv2;
-using Amazon.DynamoDBv2.DataModel;
 using Amazon.DynamoDBv2.Model;
-using Amazon.Runtime;
 using Amazon.Runtime.CredentialManagement;
-using System.Linq.Expressions;
 
 namespace DynamoDbSetup
 {
@@ -16,7 +13,6 @@ namespace DynamoDbSetup
     {
         public static void Main()
         {
-
             var profiles = new CredentialProfileStoreChain();
             var requestedProfileName = "atc";
             AmazonDynamoDBClient client;

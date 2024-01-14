@@ -1,11 +1,7 @@
 ﻿using Amazon.DynamoDBv2;
 using Amazon.Runtime.CredentialManagement;
-using ATCDataserver;
 using DynamoDBClient;
 using RecognizedAirPicture;
-using System.Collections.Concurrent;
-using System.Diagnostics;
-using System.Security.Authentication;
 
 namespace ATCDataserver
 {

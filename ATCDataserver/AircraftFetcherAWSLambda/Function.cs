@@ -3,8 +3,6 @@ using Amazon.DynamoDBv2;
 using Amazon.Lambda.APIGatewayEvents;
 using Amazon.Lambda.Core;
 using System.Text.Json;
-using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
 
 // Assembly attribute to enable the Lambda function's JSON input to be converted into a .NET class.
