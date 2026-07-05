@@ -22,7 +22,7 @@ namespace ATCDataserver
 
         private static List<RecognizedAircraft> _airPicture = new List<RecognizedAircraft>();
 
-        private static readonly string SERVICE_IP = "141.79.10.172";
+        private static readonly string SERVICE_IP = "";
         private static readonly int SERVICE_PORT = 30003;
 
         private static readonly string SERVICE_PROFILE = "atc";
