@@ -2,7 +2,7 @@
 
 import socket
 
-HOST = "141.79.10.172"  # Raspi Dachantenne B-Gebäude
+HOST = ""  # Raspi Dachantenne B-Gebäude
 PORT = 30003  # SBS  message port
 
 BLOCK_MAX = 80641 # number of blocks to be received
