@@ -13,6 +13,8 @@ Implements a dataserver providing a current air picture.
   - [Prerequisites](#prerequisites)
   - [Installation](#installation)
 
+## Work in Progress
+Changing the source for the ADS-B data so the project can be used again.
 
 
 ## API Documentation
@@ -144,6 +146,9 @@ For more information refer to the [imports for the demo](#Demo-imports)
   To start the demo, simply run [python_demo.py](Demo/python_demo.py). The demo will run on the localhost at port 5000.
   The endpoint `/calculate_new_map`, when accessed with a browser, will display the current air picture. Using the endpoint `/map` instead will continuously call `/calculate_new_map` and update the map on display every few seconds.
   For continuous updates on the map use the endpoint `/map`
+
+
+
 
 
 
